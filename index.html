@@ -116,6 +116,20 @@
     </div>
   </div>
 
+  <!-- ---- ESSAI TERMINÉ / VERROUILLÉ ---- -->
+  <div id="locked-screen" class="hidden" style="max-width:420px;margin:60px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;text-align:center;">
+    <h2 style="margin:0 0 8px;">Essai gratuit terminé</h2>
+    <p style="color:var(--ink-soft);font-size:14px;line-height:1.5;">
+      Votre mois d'essai gratuit est arrivé à son terme. Contactez-nous pour activer votre abonnement et continuer à suivre votre flotte.
+    </p>
+    <p style="font-size:14px;margin-top:18px;">
+      <strong>Samuel</strong><br>
+      +241 77 719 076 / 076 262 952<br>
+      samuelekomo24@gmail.com
+    </p>
+    <button class="btn btn-secondary" style="margin-top:14px;" onclick="logout()">Se déconnecter</button>
+  </div>
+
   <!-- ---- DASHBOARD ---- -->
   <div id="dashboard" class="hidden">
     <div class="kpi-row">
@@ -204,6 +218,7 @@ async function logout(){
   await sb.auth.signOut();
   currentUser = null;
   document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('locked-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('logout-btn').classList.add('hidden');
 }
@@ -212,9 +227,37 @@ async function onLoggedIn(){
   const { data } = await sb.auth.getUser();
   currentUser = data.user;
   document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('logout-btn').classList.remove('hidden');
+
+  const allowed = await checkSubscription();
+  if (!allowed) {
+    document.getElementById('locked-screen').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('dashboard').classList.remove('hidden');
   await loadVehicles();
+}
+
+/* ---- Essai gratuit / abonnement ---- */
+const TRIAL_DAYS = 30;
+
+async function checkSubscription(){
+  // Cherche la ligne d'abonnement du client
+  let { data: sub } = await sb.from('subscriptions').select('*').eq('owner', currentUser.id).maybeSingle();
+
+  // 1ère connexion : on crée la ligne (démarre le compteur d'essai maintenant)
+  if (!sub) {
+    const { data: created } = await sb.from('subscriptions')
+      .insert({ owner: currentUser.id })
+      .select().single();
+    sub = created;
+  }
+
+  if (sub.is_paid) return true;
+
+  const daysElapsed = (Date.now() - new Date(sub.trial_start).getTime()) / 86400000;
+  return daysElapsed <= TRIAL_DAYS;
 }
 
 /* ---- Data loading ---- */
