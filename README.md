@@ -1,1 +1,377 @@
-# Flottemine
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlotteMine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --paper:#F3EEE0; --card:#FFFDF8; --ink:#1E2A22; --ink-soft:#5B6459;
+    --forest:#0F4C3A; --forest-deep:#0A3226; --laterite:#A8471D; --laterite-soft:#C97A4A;
+    --gold:#D6A24C; --line:#E1D8BF; --ok:#2E7D4F; --warn:#B8862B; --bad:#B23B22;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  h1,h2,h3,.serif{font-family:'Fraunces',serif;}
+
+  header{background:var(--forest-deep);color:#F3EEE0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--laterite);}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:var(--forest);display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.25);}
+  .brand h1{margin:0;font-size:19px;font-weight:600;}
+  .brand span{display:block;font-size:11.5px;color:#C9CFC4;margin-top:2px;}
+  .logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#F3EEE0;padding:7px 14px;border-radius:999px;font-size:12.5px;cursor:pointer;}
+
+  main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+  .hidden{display:none !important;}
+
+  /* ---- Auth screen ---- */
+  #auth-screen{max-width:380px;margin:60px auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;}
+  #auth-screen h2{margin:0 0 4px;font-size:20px;}
+  #auth-screen .sub{color:var(--ink-soft);font-size:13px;margin-bottom:18px;}
+  .field{margin-bottom:12px;}
+  .field label{font-size:12.5px;color:var(--ink-soft);display:block;margin-bottom:5px;}
+  .field input, .field select{width:100%;padding:10px 12px;border:1.3px solid var(--line);border-radius:9px;font-size:14px;font-family:'IBM Plex Sans';background:#fff;}
+  .btn{padding:11px 16px;border-radius:10px;border:none;font-size:13.8px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans';}
+  .btn-primary{background:var(--laterite);color:#fff;width:100%;}
+  .btn-secondary{background:transparent;border:1.3px solid var(--line);color:var(--ink);}
+  .switch-mode{text-align:center;margin-top:14px;font-size:12.8px;color:var(--ink-soft);}
+  .switch-mode a{color:var(--forest);cursor:pointer;font-weight:600;}
+  #auth-error{color:var(--bad);font-size:12.5px;margin-top:8px;}
+
+  /* ---- Dashboard ---- */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px;}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .kpi b{font-size:26px;display:block;font-family:'Fraunces';color:var(--forest-deep);}
+  .kpi span{font-size:12px;color:var(--ink-soft);}
+
+  .panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+  .panel-title h2{font-size:18px;margin:0;}
+
+  .grid-body{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
+  @media (max-width:820px){ .grid-body{grid-template-columns:1fr;} }
+
+  .veh-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;}
+  .veh-card:hover{border-color:var(--laterite-soft);}
+  .veh-card.selected{border-color:var(--laterite);box-shadow:0 0 0 1px var(--laterite);}
+  .veh-top{display:flex;justify-content:space-between;align-items:center;}
+  .veh-top b{font-family:'Fraunces';font-size:15.5px;}
+  .veh-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .status{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:8px;flex-shrink:0;}
+  .status.ok{background:#E1EFE5;color:var(--ok);}
+  .status.warn{background:#F7E9CC;color:var(--warn);}
+  .status.bad{background:#F6DED4;color:var(--bad);}
+
+  .detail{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:sticky;top:20px;}
+  .detail h3{margin:0 0 2px;font-size:19px;}
+  .detail .sub{color:var(--ink-soft);font-size:13px;margin-bottom:14px;}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13.5px;}
+  .row:last-child{border-bottom:none;}
+  .row .k{color:var(--ink-soft);}
+  .row .v{font-weight:600;text-align:right;}
+  .hist-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.8px;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-dot{width:8px;height:8px;border-radius:50%;background:var(--forest);margin-top:5px;flex-shrink:0;}
+  .hist-date{color:var(--ink-soft);width:80px;flex-shrink:0;}
+  .alert-box{background:#F6DED4;border:1px solid #E9B79B;border-radius:10px;padding:12px 14px;margin:12px 0;font-size:13px;color:var(--bad);}
+  .empty-note{color:var(--ink-soft);font-size:13px;padding:20px 0;text-align:center;}
+
+  form.inline-form{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  form.inline-form .field{margin-bottom:9px;}
+  .config-warning{background:#F6DED4;border:1px solid #E9B79B;color:var(--bad);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:18px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C7 2 3 6 3 11c0 6.5 9 11 9 11s9-4.5 9-11c0-5-4-9-9-9z" fill="#D6A24C"/><circle cx="12" cy="10.5" r="3.6" fill="#0F4C3A"/></svg>
+    </div>
+    <div>
+      <h1>FlotteMine</h1>
+      <span>GMAO flotte — sous-traitants miniers</span>
+    </div>
+  </div>
+  <button class="logout hidden" id="logout-btn" onclick="logout()">Se déconnecter</button>
+</header>
+
+<main>
+  <div id="config-check" class="config-warning hidden">
+    ⚠ Configuration Supabase manquante : ouvre ce fichier, renseigne <code>SUPABASE_URL</code> et <code>SUPABASE_ANON_KEY</code> en haut du script, et exécute le fichier <code>flottemine-schema.sql</code> dans ton projet Supabase.
+  </div>
+
+  <!-- ---- AUTH SCREEN ---- -->
+  <div id="auth-screen">
+    <h2 id="auth-title">Connexion</h2>
+    <div class="sub" id="auth-sub">Accédez au tableau de bord de votre flotte.</div>
+    <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="chef.parc@entreprise.ga"></div>
+    <div class="field"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button class="btn btn-primary" id="auth-submit" onclick="handleAuth()">Se connecter</button>
+    <div id="auth-error"></div>
+    <div class="switch-mode" id="switch-mode-text">
+      Nouveau client ? <a onclick="toggleAuthMode()">Créer un compte</a>
+    </div>
+  </div>
+
+  <!-- ---- ESSAI TERMINÉ / VERROUILLÉ ---- -->
+  <div id="locked-screen" class="hidden" style="max-width:420px;margin:60px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;text-align:center;">
+    <h2 style="margin:0 0 8px;">Essai gratuit terminé</h2>
+    <p style="color:var(--ink-soft);font-size:14px;line-height:1.5;">
+      Votre mois d'essai gratuit est arrivé à son terme. Contactez-nous pour activer votre abonnement et continuer à suivre votre flotte.
+    </p>
+    <p style="font-size:14px;margin-top:18px;">
+      <strong>Samuel</strong><br>
+      +241 77 719 076 / 076 262 952<br>
+      samuelekomo24@gmail.com
+    </p>
+    <button class="btn btn-secondary" style="margin-top:14px;" onclick="logout()">Se déconnecter</button>
+  </div>
+
+  <!-- ---- DASHBOARD ---- -->
+  <div id="dashboard" class="hidden">
+    <div class="kpi-row">
+      <div class="kpi"><b id="kpi-total">0</b><span>véhicules suivis</span></div>
+      <div class="kpi"><b id="kpi-warn">0</b><span>à surveiller</span></div>
+      <div class="kpi"><b id="kpi-bad">0</b><span>urgents</span></div>
+    </div>
+
+    <div class="panel-title">
+      <h2>Parc de véhicules</h2>
+      <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+    </div>
+
+    <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
+      <div class="field"><label>Plaque d'immatriculation</label><input required id="nv-plate" placeholder="GA-1050-BL"></div>
+      <div class="field"><label>Modèle</label><input id="nv-model" value="Hilux GUN125"></div>
+      <div class="field"><label>Kilométrage actuel</label><input required type="number" id="nv-km" placeholder="15000"></div>
+      <div class="field"><label>Kilométrage à la dernière vidange</label><input required type="number" id="nv-lastservice" placeholder="10000"></div>
+      <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
+      <button class="btn btn-primary" type="submit">Ajouter</button>
+    </form>
+
+    <div class="grid-body">
+      <div id="list"><div class="empty-note">Chargement…</div></div>
+      <div class="detail" id="detail"><div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ==========================================================
+   1) CONFIGURATION — à remplir avec ton propre projet Supabase
+   Supabase → Project Settings → API
+   ========================================================== */
+const SUPABASE_URL = "https://pgoesbhdbmnjscmvsflv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
+
+let sb = null;
+let configured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
+if (configured) {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  document.getElementById('config-check').classList.remove('hidden');
+}
+
+/* ========================================================== */
+let authMode = 'login'; // 'login' | 'signup'
+let vehicles = [];
+let selectedId = null;
+let currentUser = null;
+
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  document.getElementById('auth-title').textContent = authMode === 'login' ? 'Connexion' : 'Créer un compte';
+  document.getElementById('auth-submit').textContent = authMode === 'login' ? 'Se connecter' : "Créer mon compte";
+  document.getElementById('switch-mode-text').innerHTML = authMode === 'login'
+    ? 'Nouveau client ? <a onclick="toggleAuthMode()">Créer un compte</a>'
+    : 'Déjà client ? <a onclick="toggleAuthMode()">Se connecter</a>';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function handleAuth(){
+  if(!configured){ document.getElementById('auth-error').textContent = "Configuration Supabase manquante — voir le message ci-dessus."; return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errorEl = document.getElementById('auth-error');
+  errorEl.textContent = '';
+  if(!email || !password){ errorEl.textContent = "Email et mot de passe requis."; return; }
+
+  let result;
+  if (authMode === 'login') {
+    result = await sb.auth.signInWithPassword({ email, password });
+  } else {
+    result = await sb.auth.signUp({ email, password });
+  }
+  if (result.error) { errorEl.textContent = result.error.message; return; }
+  if (authMode === 'signup' && !result.data.session) {
+    errorEl.style.color = 'var(--forest)';
+    errorEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer, puis connecte-toi.";
+    return;
+  }
+  await onLoggedIn();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser = null;
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('locked-screen').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('logout-btn').classList.add('hidden');
+}
+
+async function onLoggedIn(){
+  const { data } = await sb.auth.getUser();
+  currentUser = data.user;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('logout-btn').classList.remove('hidden');
+
+  const allowed = await checkSubscription();
+  if (!allowed) {
+    document.getElementById('locked-screen').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('dashboard').classList.remove('hidden');
+  await loadVehicles();
+}
+
+/* ---- Essai gratuit / abonnement ---- */
+const TRIAL_DAYS = 30;
+
+async function checkSubscription(){
+  // Cherche la ligne d'abonnement du client
+  let { data: sub } = await sb.from('subscriptions').select('*').eq('owner', currentUser.id).maybeSingle();
+
+  // 1ère connexion : on crée la ligne (démarre le compteur d'essai maintenant)
+  if (!sub) {
+    const { data: created } = await sb.from('subscriptions')
+      .insert({ owner: currentUser.id })
+      .select().single();
+    sub = created;
+  }
+
+  if (sub.is_paid) return true;
+
+  const daysElapsed = (Date.now() - new Date(sub.trial_start).getTime()) / 86400000;
+  return daysElapsed <= TRIAL_DAYS;
+}
+
+/* ---- Data loading ---- */
+async function loadVehicles(){
+  const { data: vList, error } = await sb.from('vehicles').select('*').order('created_at', { ascending: true });
+  if (error) { document.getElementById('list').innerHTML = `<div class="empty-note">Erreur de chargement : ${error.message}</div>`; return; }
+  vehicles = vList || [];
+  for (const v of vehicles) {
+    const { data: hist } = await sb.from('interventions').select('*').eq('vehicle_id', v.id).order('date', { ascending: false });
+    v.hist = hist || [];
+  }
+  if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
+  renderKpis();
+  renderList();
+  renderDetail();
+}
+
+function computeStatus(v){
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  if (remaining <= 0) return 'bad';
+  if (remaining <= 1000) return 'warn';
+  return 'ok';
+}
+function statusLabel(s){ return s==='ok' ? 'OK' : s==='warn' ? 'À surveiller' : 'Urgent'; }
+function nextText(v){
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  if (remaining <= 0) return `Vidange dépassée de ${Math.abs(remaining).toLocaleString('fr-FR')} km`;
+  return `Vidange dans ${remaining.toLocaleString('fr-FR')} km`;
+}
+
+function renderKpis(){
+  document.getElementById('kpi-total').textContent = vehicles.length;
+  document.getElementById('kpi-warn').textContent = vehicles.filter(v=>computeStatus(v)==='warn').length;
+  document.getElementById('kpi-bad').textContent = vehicles.filter(v=>computeStatus(v)==='bad').length;
+}
+
+function renderList(){
+  const el = document.getElementById('list');
+  if (!vehicles.length){ el.innerHTML = `<div class="empty-note">Aucun véhicule pour l'instant — ajoutez le premier ci-dessus.</div>`; return; }
+  el.innerHTML = '';
+  vehicles.forEach(v=>{
+    const s = computeStatus(v);
+    const card = document.createElement('div');
+    card.className = 'veh-card' + (v.id===selectedId ? ' selected':'');
+    card.innerHTML = `<div class="veh-top">
+        <b>${v.plate}</b>
+        <span class="status ${s}">${statusLabel(s)}</span>
+      </div>
+      <div class="veh-meta">${v.model} · ${v.km.toLocaleString('fr-FR')} km</div>
+      <div class="veh-meta">${nextText(v)}</div>`;
+    card.onclick = ()=>{ selectedId = v.id; renderList(); renderDetail(); };
+    el.appendChild(card);
+  });
+}
+
+function renderDetail(){
+  const el = document.getElementById('detail');
+  const v = vehicles.find(x=>x.id===selectedId);
+  if(!v){ el.innerHTML = `<div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div>`; return; }
+  const s = computeStatus(v);
+  el.innerHTML = `
+    <h3>${v.plate}</h3>
+    <div class="sub">${v.model} — ${v.km.toLocaleString('fr-FR')} km</div>
+    <div class="row"><span class="k">Statut</span><span class="v">${statusLabel(s)}</span></div>
+    <div class="row"><span class="k">Prochaine échéance</span><span class="v">${nextText(v)}</span></div>
+    ${s==='bad' ? `<div class="alert-box">⚠ Intervention à programmer sans délai.</div>` : ''}
+    <div>
+      <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Historique</span></div>
+      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${h.date}</div><div>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}</div></div>`).join('')
+        : '<div class="empty-note" style="padding:8px 0;">Aucune intervention enregistrée.</div>'}
+    </div>
+    <form class="inline-form" onsubmit="addIntervention(event, '${v.id}')">
+      <div class="field"><label>Nouvelle intervention</label><input required id="int-desc-${v.id}" placeholder="Ex : Vidange + filtres"></div>
+      <div class="field"><label>Kilométrage au moment de l'intervention</label><input required type="number" id="int-km-${v.id}" value="${v.km}"></div>
+      <button class="btn btn-primary" type="submit">Enregistrer l'intervention</button>
+    </form>
+  `;
+}
+
+/* ---- Forms ---- */
+function toggleAddForm(){ document.getElementById('add-vehicle-form').classList.toggle('hidden'); }
+
+async function addVehicle(e){
+  e.preventDefault();
+  const plate = document.getElementById('nv-plate').value.trim();
+  const model = document.getElementById('nv-model').value.trim() || 'Hilux GUN125';
+  const km = parseInt(document.getElementById('nv-km').value, 10);
+  const last_service_km = parseInt(document.getElementById('nv-lastservice').value, 10);
+  const service_interval_km = parseInt(document.getElementById('nv-interval').value, 10);
+  const { error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-vehicle-form').reset();
+  document.getElementById('add-vehicle-form').classList.add('hidden');
+  await loadVehicles();
+}
+
+async function addIntervention(e, vehicleId){
+  e.preventDefault();
+  const description = document.getElementById(`int-desc-${vehicleId}`).value.trim();
+  const km_at_service = parseInt(document.getElementById(`int-km-${vehicleId}`).value, 10);
+  const { error: e1 } = await sb.from('interventions').insert([{ vehicle_id: vehicleId, description, km_at_service, date: new Date().toISOString().slice(0,10) }]);
+  if (e1) { alert("Erreur : " + e1.message); return; }
+  // On considère l'intervention comme la dernière vidange de référence et on met à jour le kilométrage
+  const { error: e2 } = await sb.from('vehicles').update({ last_service_km: km_at_service, km: km_at_service }).eq('id', vehicleId);
+  if (e2) { alert("Erreur : " + e2.message); return; }
+  await loadVehicles();
+}
+
+/* ---- Boot ---- */
+(async function boot(){
+  if (!configured) return;
+  const { data } = await sb.auth.getSession();
+  if (data.session) { await onLoggedIn(); }
+})();
+</script>
+</body>
+</html>
