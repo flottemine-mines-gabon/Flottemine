@@ -82,6 +82,29 @@
   form.inline-form{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
   form.inline-form .field{margin-bottom:9px;}
   .config-warning{background:#F6DED4;border:1px solid #E9B79B;color:var(--bad);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:18px;}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+  .tab-btn{background:transparent;border:1.3px solid var(--line);color:var(--ink-soft);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans';}
+  .tab-btn.active{background:var(--forest-deep);border-color:var(--forest-deep);color:#F3EEE0;}
+
+  /* ---- Priority / status badges ---- */
+  .prio{font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;flex-shrink:0;}
+  .prio.faible{background:#E1EFE5;color:var(--ok);}
+  .prio.moyenne{background:#F7E9CC;color:var(--warn);}
+  .prio.urgente{background:#F6DED4;color:var(--bad);}
+  .bstatus{font-size:11px;color:var(--ink-soft);}
+  .stock-low{background:#F6DED4;color:var(--bad);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;}
+  .stock-ok{background:#E1EFE5;color:var(--ok);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;}
+
+  .bd-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
+  .bd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+  .bd-desc{font-size:13.5px;margin:6px 0;}
+  .bd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .btn-tiny{padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:11.5px;cursor:pointer;font-family:'IBM Plex Sans';}
+  .btn-tiny.danger{color:var(--bad);border-color:#E9B79B;}
+  .qty-adjust{display:flex;align-items:center;gap:8px;}
+  .qty-adjust button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:15px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -132,29 +155,94 @@
 
   <!-- ---- DASHBOARD ---- -->
   <div id="dashboard" class="hidden">
-    <div class="kpi-row">
-      <div class="kpi"><b id="kpi-total">0</b><span>véhicules suivis</span></div>
-      <div class="kpi"><b id="kpi-warn">0</b><span>à surveiller</span></div>
-      <div class="kpi"><b id="kpi-bad">0</b><span>urgents</span></div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')">Véhicules</button>
+      <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')">Pannes</button>
+      <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')">Pièces & Stock</button>
     </div>
 
-    <div class="panel-title">
-      <h2>Parc de véhicules</h2>
-      <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+    <!-- ===== ONGLET VÉHICULES ===== -->
+    <div id="tab-vehicles" class="tab-panel">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-total">0</b><span>véhicules suivis</span></div>
+        <div class="kpi"><b id="kpi-warn">0</b><span>à surveiller</span></div>
+        <div class="kpi"><b id="kpi-bad">0</b><span>urgents</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2>Parc de véhicules</h2>
+        <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
+        <div class="field"><label>Plaque d'immatriculation</label><input required id="nv-plate" placeholder="GA-1050-BL"></div>
+        <div class="field"><label>Modèle</label><input id="nv-model" value="Hilux GUN125"></div>
+        <div class="field"><label>Kilométrage actuel</label><input required type="number" id="nv-km" placeholder="15000"></div>
+        <div class="field"><label>Kilométrage à la dernière vidange</label><input required type="number" id="nv-lastservice" placeholder="10000"></div>
+        <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
+        <button class="btn btn-primary" type="submit">Ajouter</button>
+      </form>
+
+      <div class="grid-body">
+        <div id="list"><div class="empty-note">Chargement…</div></div>
+        <div class="detail" id="detail"><div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div></div>
+      </div>
     </div>
 
-    <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
-      <div class="field"><label>Plaque d'immatriculation</label><input required id="nv-plate" placeholder="GA-1050-BL"></div>
-      <div class="field"><label>Modèle</label><input id="nv-model" value="Hilux GUN125"></div>
-      <div class="field"><label>Kilométrage actuel</label><input required type="number" id="nv-km" placeholder="15000"></div>
-      <div class="field"><label>Kilométrage à la dernière vidange</label><input required type="number" id="nv-lastservice" placeholder="10000"></div>
-      <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
-      <button class="btn btn-primary" type="submit">Ajouter</button>
-    </form>
+    <!-- ===== ONGLET PANNES ===== -->
+    <div id="tab-breakdowns" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-bd-urgent">0</b><span>pannes urgentes</span></div>
+        <div class="kpi"><b id="kpi-bd-progress">0</b><span>en cours</span></div>
+        <div class="kpi"><b id="kpi-bd-open">0</b><span>ouvertes au total</span></div>
+      </div>
 
-    <div class="grid-body">
-      <div id="list"><div class="empty-note">Chargement…</div></div>
-      <div class="detail" id="detail"><div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div></div>
+      <div class="panel-title">
+        <h2>Pannes — priorités de réparation</h2>
+        <button class="btn btn-secondary" onclick="toggleEl('add-breakdown-form')">+ Signaler une panne</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-breakdown-form" onsubmit="addBreakdown(event)">
+        <div class="field"><label>Véhicule</label><select required id="nb-vehicle"></select></div>
+        <div class="field"><label>Description de la panne</label><input required id="nb-desc" placeholder="Ex : Fuite hydraulique essieu avant"></div>
+        <div class="field"><label>Priorité</label>
+          <select id="nb-priority">
+            <option value="urgente">Urgente</option>
+            <option value="moyenne" selected>Moyenne</option>
+            <option value="faible">Faible</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Enregistrer la panne</button>
+      </form>
+
+      <div id="breakdown-list"><div class="empty-note">Chargement…</div></div>
+    </div>
+
+    <!-- ===== ONGLET PIÈCES & STOCK ===== -->
+    <div id="tab-parts" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-parts-total">0</b><span>références en stock</span></div>
+        <div class="kpi"><b id="kpi-parts-low">0</b><span>stock bas</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2>Pièces détachées & stock</h2>
+        <button class="btn btn-secondary" onclick="toggleEl('add-part-form')">+ Ajouter une pièce</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-part-form" onsubmit="addPart(event)">
+        <div class="field"><label>Nom de la pièce</label><input required id="np-name" placeholder="Ex : Filtre à huile"></div>
+        <div class="field"><label>Référence</label><input id="np-ref" placeholder="Ex : 90915-YZZD4"></div>
+        <div class="field"><label>Quantité en stock</label><input required type="number" id="np-qty" value="0"></div>
+        <div class="field"><label>Seuil d'alerte stock bas</label><input required type="number" id="np-min" value="2"></div>
+        <div class="field"><label>Prix unitaire (XAF, optionnel)</label><input type="number" id="np-price" placeholder="15000"></div>
+        <button class="btn btn-primary" type="submit">Ajouter la pièce</button>
+      </form>
+
+      <div class="grid-body">
+        <div id="parts-list"><div class="empty-note">Chargement…</div></div>
+        <div class="detail" id="parts-detail"><div class="empty-note">Sélectionnez une pièce pour la modifier.</div></div>
+      </div>
     </div>
   </div>
 </main>
@@ -237,7 +325,18 @@ async function onLoggedIn(){
 
   document.getElementById('dashboard').classList.remove('hidden');
   await loadVehicles();
+  await loadBreakdowns();
+  await loadParts();
 }
+
+/* ---- Tabs ---- */
+function switchTab(name){
+  ['vehicles','breakdowns','parts'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+    document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
+  });
+}
+function toggleEl(id){ document.getElementById(id).classList.toggle('hidden'); }
 
 /* ---- Essai gratuit / abonnement ---- */
 const TRIAL_DAYS = 30;
@@ -273,6 +372,8 @@ async function loadVehicles(){
   renderKpis();
   renderList();
   renderDetail();
+  const vsel = document.getElementById('nb-vehicle');
+  if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
 }
 
 function computeStatus(v){
@@ -337,6 +438,172 @@ function renderDetail(){
   `;
 }
 
+/* ---- Pannes (breakdowns) ---- */
+let breakdowns = [];
+const prioRank = { urgente: 0, moyenne: 1, faible: 2 };
+
+async function loadBreakdowns(){
+  const { data, error } = await sb.from('breakdowns').select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('breakdown-list').innerHTML = `<div class="empty-note">Erreur : ${error.message}</div>`; return; }
+  breakdowns = (data || []).sort((a,b)=>{
+    if (a.status==='resolue' && b.status!=='resolue') return 1;
+    if (b.status==='resolue' && a.status!=='resolue') return -1;
+    return prioRank[a.priority]-prioRank[b.priority];
+  });
+  renderBreakdownKpis();
+  renderBreakdownList();
+}
+
+function renderBreakdownKpis(){
+  document.getElementById('kpi-bd-urgent').textContent = breakdowns.filter(b=>b.priority==='urgente' && b.status!=='resolue').length;
+  document.getElementById('kpi-bd-progress').textContent = breakdowns.filter(b=>b.status==='en_cours').length;
+  document.getElementById('kpi-bd-open').textContent = breakdowns.filter(b=>b.status!=='resolue').length;
+}
+
+function vehiclePlate(id){ const v = vehicles.find(x=>x.id===id); return v ? v.plate : '—'; }
+function statusText(s){ return s==='ouverte'?'Ouverte':s==='en_cours'?'En cours':'Résolue'; }
+
+function renderBreakdownList(){
+  const el = document.getElementById('breakdown-list');
+  if (!breakdowns.length){ el.innerHTML = `<div class="empty-note">Aucune panne enregistrée.</div>`; return; }
+  el.innerHTML = '';
+  breakdowns.forEach(b=>{
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${vehiclePlate(b.vehicle_id)}</b>
+        <span class="prio ${b.priority}">${b.priority.charAt(0).toUpperCase()+b.priority.slice(1)}</span>
+      </div>
+      <div class="bd-desc">${b.description}</div>
+      <div class="bstatus">Statut : ${statusText(b.status)} · signalée le ${b.reported_at}</div>
+      <div class="bd-actions">
+        ${b.status!=='en_cours' ? `<button class="btn-tiny" onclick="updateBreakdownStatus('${b.id}','en_cours')">Passer en cours</button>` : ''}
+        ${b.status!=='resolue' ? `<button class="btn-tiny" onclick="updateBreakdownStatus('${b.id}','resolue')">Marquer résolue</button>` : ''}
+        <button class="btn-tiny danger" onclick="deleteBreakdown('${b.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+async function addBreakdown(e){
+  e.preventDefault();
+  const vehicle_id = document.getElementById('nb-vehicle').value;
+  const description = document.getElementById('nb-desc').value.trim();
+  const priority = document.getElementById('nb-priority').value;
+  if (!vehicle_id) { alert("Ajoutez d'abord un véhicule."); return; }
+  const { error } = await sb.from('breakdowns').insert([{ vehicle_id, description, priority }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-breakdown-form').reset();
+  document.getElementById('add-breakdown-form').classList.add('hidden');
+  await loadBreakdowns();
+}
+
+async function updateBreakdownStatus(id, status){
+  const patch = { status };
+  if (status === 'resolue') patch.resolved_at = new Date().toISOString().slice(0,10);
+  const { error } = await sb.from('breakdowns').update(patch).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadBreakdowns();
+}
+
+async function deleteBreakdown(id){
+  if (!confirm("Supprimer cette panne ?")) return;
+  const { error } = await sb.from('breakdowns').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadBreakdowns();
+}
+
+/* ---- Pièces détachées & stock ---- */
+let parts = [];
+let selectedPartId = null;
+
+async function loadParts(){
+  const { data, error } = await sb.from('parts').select('*').order('name', { ascending: true });
+  if (error) { document.getElementById('parts-list').innerHTML = `<div class="empty-note">Erreur : ${error.message}</div>`; return; }
+  parts = data || [];
+  renderPartsKpis();
+  renderPartsList();
+  renderPartDetail();
+}
+
+function renderPartsKpis(){
+  document.getElementById('kpi-parts-total').textContent = parts.length;
+  document.getElementById('kpi-parts-low').textContent = parts.filter(p=>p.quantity<=p.min_quantity).length;
+}
+
+function renderPartsList(){
+  const el = document.getElementById('parts-list');
+  if (!parts.length){ el.innerHTML = `<div class="empty-note">Aucune pièce enregistrée — ajoutez-en une ci-dessus.</div>`; return; }
+  el.innerHTML = '';
+  parts.forEach(p=>{
+    const low = p.quantity <= p.min_quantity;
+    const card = document.createElement('div');
+    card.className = 'veh-card' + (p.id===selectedPartId ? ' selected':'');
+    card.innerHTML = `<div class="veh-top">
+        <b>${p.name}</b>
+        <span class="${low?'stock-low':'stock-ok'}">${low?'Stock bas':'OK'}</span>
+      </div>
+      <div class="veh-meta">${p.reference || 'Sans référence'}</div>
+      <div class="veh-meta">${p.quantity} en stock (seuil : ${p.min_quantity})</div>`;
+    card.onclick = ()=>{ selectedPartId = p.id; renderPartsList(); renderPartDetail(); };
+    el.appendChild(card);
+  });
+}
+
+function renderPartDetail(){
+  const el = document.getElementById('parts-detail');
+  const p = parts.find(x=>x.id===selectedPartId);
+  if(!p){ el.innerHTML = `<div class="empty-note">Sélectionnez une pièce pour la modifier.</div>`; return; }
+  el.innerHTML = `
+    <h3>${p.name}</h3>
+    <div class="sub">${p.reference || 'Sans référence'}</div>
+    <div class="row"><span class="k">Quantité en stock</span>
+      <span class="v qty-adjust">
+        <button onclick="adjustPartQty('${p.id}', -1)">−</button>
+        ${p.quantity}
+        <button onclick="adjustPartQty('${p.id}', 1)">+</button>
+      </span>
+    </div>
+    <div class="row"><span class="k">Seuil d'alerte</span><span class="v">${p.min_quantity}</span></div>
+    ${p.unit_price ? `<div class="row"><span class="k">Prix unitaire</span><span class="v">${Number(p.unit_price).toLocaleString('fr-FR')} XAF</span></div>` : ''}
+    ${p.quantity<=p.min_quantity ? `<div class="alert-box">⚠ Stock bas — pensez à réapprovisionner.</div>` : ''}
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="deletePart('${p.id}')">Supprimer cette pièce</button>
+  `;
+}
+
+async function addPart(e){
+  e.preventDefault();
+  const name = document.getElementById('np-name').value.trim();
+  const reference = document.getElementById('np-ref').value.trim();
+  const quantity = parseInt(document.getElementById('np-qty').value, 10);
+  const min_quantity = parseInt(document.getElementById('np-min').value, 10);
+  const priceRaw = document.getElementById('np-price').value;
+  const unit_price = priceRaw ? parseFloat(priceRaw) : null;
+  const { error } = await sb.from('parts').insert([{ name, reference, quantity, min_quantity, unit_price }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-part-form').reset();
+  document.getElementById('add-part-form').classList.add('hidden');
+  await loadParts();
+}
+
+async function adjustPartQty(id, delta){
+  const p = parts.find(x=>x.id===id);
+  if (!p) return;
+  const newQty = Math.max(0, p.quantity + delta);
+  const { error } = await sb.from('parts').update({ quantity: newQty }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadParts();
+}
+
+async function deletePart(id){
+  if (!confirm("Supprimer cette pièce ?")) return;
+  const { error } = await sb.from('parts').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  selectedPartId = null;
+  await loadParts();
+}
+
 /* ---- Forms ---- */
 function toggleAddForm(){ document.getElementById('add-vehicle-form').classList.toggle('hidden'); }
 
@@ -374,4 +641,4 @@ async function addIntervention(e, vehicleId){
 })();
 </script>
 </body>
-</html>
+  </html>
