@@ -18,13 +18,45 @@
     --radius:8px;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;position:relative;overflow-x:hidden;}
   h1,h2,h3,.serif{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-0.01em;}
   .mono,.kpi b,.row .v,.veh-meta,.bstatus{font-family:'IBM Plex Mono','IBM Plex Sans',monospace;}
 
+  /* ---- Fond d'écran animé ---- */
+  body::before,body::after{
+    content:"";position:fixed;inset:-15%;z-index:-2;pointer-events:none;filter:blur(70px) saturate(115%);
+  }
+  body::before{
+    background:
+      radial-gradient(circle at 18% 28%, rgba(245,179,1,.18), transparent 42%),
+      radial-gradient(circle at 82% 18%, rgba(194,84,43,.16), transparent 46%),
+      radial-gradient(circle at 55% 85%, rgba(76,175,125,.14), transparent 42%);
+    animation:wallpaper-drift-a 28s ease-in-out infinite;
+  }
+  body::after{
+    background:
+      radial-gradient(circle at 72% 68%, rgba(245,179,1,.10), transparent 38%),
+      radial-gradient(circle at 8% 88%, rgba(194,84,43,.12), transparent 42%);
+    animation:wallpaper-drift-b 36s ease-in-out infinite;
+  }
+  @keyframes wallpaper-drift-a{
+    0%,100%{transform:translate(0,0) scale(1);}
+    33%{transform:translate(4%,-5%) scale(1.06);}
+    66%{transform:translate(-4%,4%) scale(0.97);}
+  }
+  @keyframes wallpaper-drift-b{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(-5%,-4%) scale(1.08);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+    body::before,body::after{animation:none !important;}
+  }
+
   header{background:var(--surface);color:var(--ink);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
   .brand{display:flex;align-items:center;gap:12px;}
-  .brand-mark{width:38px;height:38px;border-radius:7px;background:var(--yellow);display:flex;align-items:center;justify-content:center;}
+  .brand-mark{width:38px;height:38px;border-radius:7px;background:var(--yellow);display:flex;align-items:center;justify-content:center;animation:brand-float 3.6s ease-in-out infinite;}
+  @keyframes brand-float{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-3px) rotate(-4deg);}}
   .brand-mark svg circle{fill:#0D1210;}
   .brand-mark svg path{fill:#0D1210;}
   .brand h1{margin:0;font-size:19px;}
@@ -95,8 +127,28 @@
 
   /* ---- Tabs ---- */
   .tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;background:var(--surface);padding:4px;border-radius:8px;width:fit-content;}
-  .tab-btn{background:transparent;border:none;color:var(--ink-soft);padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans';}
-  .tab-btn.active{background:var(--yellow);color:#15130A;}
+  .tab-btn{background:transparent;border:none;color:var(--ink-soft);padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans';transition:background .2s,color .2s;}
+  .tab-btn.active{background:var(--yellow);color:#15130A;animation:tab-pop .35s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes tab-pop{0%{transform:scale(.9);}60%{transform:scale(1.05);}100%{transform:scale(1);}}
+
+  /* ---- Animation d'entrée par rubrique ---- */
+  #tab-vehicles.tab-panel{animation:panel-in-left .5s cubic-bezier(.16,.84,.44,1);}
+  #tab-breakdowns.tab-panel{animation:panel-in-up .5s cubic-bezier(.16,.84,.44,1);}
+  #tab-parts.tab-panel{animation:panel-in-scale .5s cubic-bezier(.16,.84,.44,1);}
+  @keyframes panel-in-left{from{opacity:0;transform:translateX(-18px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes panel-in-up{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes panel-in-scale{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+
+  .kpi{animation:kpi-in .5s cubic-bezier(.16,.84,.44,1) backwards;}
+  .kpi-row .kpi:nth-child(1){animation-delay:.05s;}
+  .kpi-row .kpi:nth-child(2){animation-delay:.11s;}
+  .kpi-row .kpi:nth-child(3){animation-delay:.17s;}
+  .kpi-row .kpi:nth-child(4){animation-delay:.23s;}
+  .kpi-row .kpi:nth-child(5){animation-delay:.29s;}
+  @keyframes kpi-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .veh-card,.bd-item{animation:card-in .4s cubic-bezier(.16,.84,.44,1) backwards;}
+  @keyframes card-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
   /* ---- Priority / status badges ---- */
   .prio{font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;flex-shrink:0;}
@@ -469,22 +521,38 @@ function nextText(v){
   return `Vidange dans ${remaining.toLocaleString('fr-FR')} km`;
 }
 
+function animateNumber(el, target){
+  if (!el) return;
+  const start = Number(el.textContent) || 0;
+  if (start === target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = target; return; }
+  const duration = 500;
+  const t0 = performance.now();
+  function step(now){
+    const p = Math.min((now - t0) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(start + (target - start) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function renderKpis(){
-  document.getElementById('kpi-total').textContent = vehicles.length;
-  document.getElementById('kpi-available').textContent = vehicles.filter(v=>v.availability!=='en_maintenance').length;
-  document.getElementById('kpi-maintenance').textContent = vehicles.filter(v=>v.availability==='en_maintenance').length;
-  document.getElementById('kpi-warn').textContent = vehicles.filter(v=>computeStatus(v)==='warn').length;
-  document.getElementById('kpi-bad').textContent = vehicles.filter(v=>computeStatus(v)==='bad').length;
+  animateNumber(document.getElementById('kpi-total'), vehicles.length);
+  animateNumber(document.getElementById('kpi-available'), vehicles.filter(v=>v.availability!=='en_maintenance').length);
+  animateNumber(document.getElementById('kpi-maintenance'), vehicles.filter(v=>v.availability==='en_maintenance').length);
+  animateNumber(document.getElementById('kpi-warn'), vehicles.filter(v=>computeStatus(v)==='warn').length);
+  animateNumber(document.getElementById('kpi-bad'), vehicles.filter(v=>computeStatus(v)==='bad').length);
 }
 
 function renderList(){
   const el = document.getElementById('list');
   if (!vehicles.length){ el.innerHTML = `<div class="empty-note">Aucun véhicule pour l'instant — ajoutez le premier ci-dessus.</div>`; return; }
   el.innerHTML = '';
-  vehicles.forEach(v=>{
+  vehicles.forEach((v,i)=>{
     const s = computeStatus(v);
     const card = document.createElement('div');
     card.className = 'veh-card' + (v.id===selectedId ? ' selected':'');
+    card.style.animationDelay = (i*0.05)+'s';
     card.innerHTML = `<div class="veh-top">
         <b>${v.plate}</b>
         <span class="status ${s}">${statusLabel(s)}</span>
@@ -564,9 +632,9 @@ async function loadBreakdowns(){
 }
 
 function renderBreakdownKpis(){
-  document.getElementById('kpi-bd-urgent').textContent = breakdowns.filter(b=>b.priority==='urgente' && b.status!=='resolue').length;
-  document.getElementById('kpi-bd-progress').textContent = breakdowns.filter(b=>b.status==='en_cours').length;
-  document.getElementById('kpi-bd-open').textContent = breakdowns.filter(b=>b.status!=='resolue').length;
+  animateNumber(document.getElementById('kpi-bd-urgent'), breakdowns.filter(b=>b.priority==='urgente' && b.status!=='resolue').length);
+  animateNumber(document.getElementById('kpi-bd-progress'), breakdowns.filter(b=>b.status==='en_cours').length);
+  animateNumber(document.getElementById('kpi-bd-open'), breakdowns.filter(b=>b.status!=='resolue').length);
 }
 
 function vehiclePlate(id){ const v = vehicles.find(x=>x.id===id); return v ? v.plate : '—'; }
@@ -576,9 +644,10 @@ function renderBreakdownList(){
   const el = document.getElementById('breakdown-list');
   if (!breakdowns.length){ el.innerHTML = `<div class="empty-note">Aucune panne enregistrée.</div>`; return; }
   el.innerHTML = '';
-  breakdowns.forEach(b=>{
+  breakdowns.forEach((b,i)=>{
     const div = document.createElement('div');
     div.className = 'bd-item';
+    div.style.animationDelay = (i*0.05)+'s';
     div.innerHTML = `
       <div class="bd-top">
         <b>${vehiclePlate(b.vehicle_id)}</b>
@@ -708,18 +777,19 @@ async function loadParts(){
 }
 
 function renderPartsKpis(){
-  document.getElementById('kpi-parts-total').textContent = parts.length;
-  document.getElementById('kpi-parts-low').textContent = parts.filter(p=>p.quantity<=p.min_quantity).length;
+  animateNumber(document.getElementById('kpi-parts-total'), parts.length);
+  animateNumber(document.getElementById('kpi-parts-low'), parts.filter(p=>p.quantity<=p.min_quantity).length);
 }
 
 function renderPartsList(){
   const el = document.getElementById('parts-list');
   if (!parts.length){ el.innerHTML = `<div class="empty-note">Aucune pièce enregistrée — ajoutez-en une ci-dessus.</div>`; return; }
   el.innerHTML = '';
-  parts.forEach(p=>{
+  parts.forEach((p,i)=>{
     const low = p.quantity <= p.min_quantity;
     const card = document.createElement('div');
     card.className = 'veh-card' + (p.id===selectedPartId ? ' selected':'');
+    card.style.animationDelay = (i*0.05)+'s';
     card.innerHTML = `<div class="veh-top">
         <b>${p.name}</b>
         <span class="${low?'stock-low':'stock-ok'}">${low?'Stock bas':'OK'}</span>
