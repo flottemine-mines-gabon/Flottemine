@@ -173,7 +173,10 @@
 
       <div class="panel-title">
         <h2>Parc de véhicules</h2>
-        <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="exportCSV()">⬇ Exporter (Excel/CSV)</button>
+          <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+        </div>
       </div>
 
       <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
@@ -214,6 +217,10 @@
             <span id="rec-status" class="bstatus"></span>
           </div>
           <audio id="rec-preview" class="hidden" controls style="width:100%;margin-top:8px;"></audio>
+        </div>
+        <div class="field">
+          <label>Photo du dégât (optionnel)</label>
+          <input type="file" id="nb-photo" accept="image/*" capture="environment">
         </div>
         <div class="field"><label>Priorité</label>
           <select id="nb-priority">
@@ -439,6 +446,7 @@ function renderDetail(){
     <div class="row"><span class="k">Prochaine échéance</span><span class="v">${nextText(v)}</span></div>
     <div class="row"><span class="k">Disponibilité</span><span class="v">${v.availability==='en_maintenance' ? 'En maintenance' : 'Disponible'}</span></div>
     ${v.availability==='en_maintenance' ? `<div class="row"><span class="k">Sortie prévue</span><span class="v">${v.maintenance_until || '—'}</span></div>` : ''}
+    <div class="row"><span class="k">Coût total entretien</span><span class="v">${v.hist.reduce((sum,h)=>sum+(Number(h.cost)||0),0).toLocaleString('fr-FR')} XAF</span></div>
     ${s==='bad' ? `<div class="alert-box">⚠ Intervention à programmer sans délai.</div>` : ''}
 
     ${v.availability==='disponible' ? `
@@ -453,12 +461,13 @@ function renderDetail(){
 
     <div>
       <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Historique</span></div>
-      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${h.date}</div><div>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}</div></div>`).join('')
+      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${h.date}</div><div>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}${h.cost ? ' — ' + Number(h.cost).toLocaleString('fr-FR') + ' XAF' : ''}</div></div>`).join('')
         : '<div class="empty-note" style="padding:8px 0;">Aucune intervention enregistrée.</div>'}
     </div>
     <form class="inline-form" onsubmit="addIntervention(event, '${v.id}')">
       <div class="field"><label>Nouvelle intervention</label><input required id="int-desc-${v.id}" placeholder="Ex : Vidange + filtres"></div>
       <div class="field"><label>Kilométrage au moment de l'intervention</label><input required type="number" id="int-km-${v.id}" value="${v.km}"></div>
+      <div class="field"><label>Coût (XAF, optionnel)</label><input type="number" id="int-cost-${v.id}" placeholder="25000"></div>
       <button class="btn btn-primary" type="submit">Enregistrer l'intervention</button>
     </form>
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')">Supprimer ce véhicule</button>
@@ -504,6 +513,7 @@ function renderBreakdownList(){
       </div>
       <div class="bd-desc">${b.description}</div>
       ${b.voice_url ? `<audio controls src="${b.voice_url}" style="width:100%;margin:6px 0;"></audio>` : ''}
+      ${b.photo_url ? `<img src="${b.photo_url}" style="width:100%;border-radius:8px;margin:6px 0;display:block;">` : ''}
       <div class="bstatus">Statut : ${statusText(b.status)} · signalée le ${b.reported_at}</div>
       <div class="bd-actions">
         ${b.status!=='en_cours' ? `<button class="btn-tiny" onclick="updateBreakdownStatus('${b.id}','en_cours')">Passer en cours</button>` : ''}
@@ -565,7 +575,18 @@ async function addBreakdown(e){
     voice_url = pub.publicUrl;
   }
 
-  const { error } = await sb.from('breakdowns').insert([{ vehicle_id, description: description || '(note vocale)', priority, voice_url }]);
+  let photo_url = null;
+  const photoInput = document.getElementById('nb-photo');
+  if (photoInput && photoInput.files[0]) {
+    const file = photoInput.files[0];
+    const fileName = `${currentUser.id}/${Date.now()}-${file.name}`;
+    const { error: upErr2 } = await sb.storage.from('breakdown-photos').upload(fileName, file);
+    if (upErr2) { alert("Erreur envoi de la photo : " + upErr2.message); return; }
+    const { data: pub2 } = sb.storage.from('breakdown-photos').getPublicUrl(fileName);
+    photo_url = pub2.publicUrl;
+  }
+
+  const { error } = await sb.from('breakdowns').insert([{ vehicle_id, description: description || '(note vocale)', priority, voice_url, photo_url }]);
   if (error) { alert("Erreur : " + error.message); return; }
   document.getElementById('add-breakdown-form').reset();
   document.getElementById('add-breakdown-form').classList.add('hidden');
@@ -724,12 +745,35 @@ async function addIntervention(e, vehicleId){
   e.preventDefault();
   const description = document.getElementById(`int-desc-${vehicleId}`).value.trim();
   const km_at_service = parseInt(document.getElementById(`int-km-${vehicleId}`).value, 10);
-  const { error: e1 } = await sb.from('interventions').insert([{ vehicle_id: vehicleId, description, km_at_service, date: new Date().toISOString().slice(0,10) }]);
+  const costRaw = document.getElementById(`int-cost-${vehicleId}`).value;
+  const cost = costRaw ? parseFloat(costRaw) : null;
+  const { error: e1 } = await sb.from('interventions').insert([{ vehicle_id: vehicleId, description, km_at_service, cost, date: new Date().toISOString().slice(0,10) }]);
   if (e1) { alert("Erreur : " + e1.message); return; }
   // On considère l'intervention comme la dernière vidange de référence et on met à jour le kilométrage
   const { error: e2 } = await sb.from('vehicles').update({ last_service_km: km_at_service, km: km_at_service }).eq('id', vehicleId);
   if (e2) { alert("Erreur : " + e2.message); return; }
   await loadVehicles();
+}
+
+function exportCSV(){
+  const header = ['Plaque','Modèle','Kilométrage','Statut','Disponibilité','Sortie prévue maintenance','Coût total entretien (XAF)'];
+  const rows = vehicles.map(v=>[
+    v.plate,
+    v.model,
+    v.km,
+    statusLabel(computeStatus(v)),
+    v.availability==='en_maintenance' ? 'En maintenance' : 'Disponible',
+    v.maintenance_until || '',
+    v.hist.reduce((sum,h)=>sum+(Number(h.cost)||0),0)
+  ]);
+  const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flottemine-vehicules-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* ---- Boot ---- */
@@ -740,4 +784,4 @@ async function addIntervention(e, vehicleId){
 })();
 </script>
 </body>
-            </html>
+</html>
