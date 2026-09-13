@@ -81,4 +81,663 @@
 
   form.inline-form{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
   form.inline-form .field{margin-bottom:9px;}
-  .config-warning{background:#F6DED4;border:1px solid #E9B79B;color:var(--bad);border-radius:10px;padding:12px 16p
+  .config-warning{background:#F6DED4;border:1px solid #E9B79B;color:var(--bad);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:18px;}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+  .tab-btn{background:transparent;border:1.3px solid var(--line);color:var(--ink-soft);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans';}
+  .tab-btn.active{background:var(--forest-deep);border-color:var(--forest-deep);color:#F3EEE0;}
+
+  /* ---- Priority / status badges ---- */
+  .prio{font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;flex-shrink:0;}
+  .prio.faible{background:#E1EFE5;color:var(--ok);}
+  .prio.moyenne{background:#F7E9CC;color:var(--warn);}
+  .prio.urgente{background:#F6DED4;color:var(--bad);}
+  .bstatus{font-size:11px;color:var(--ink-soft);}
+  .stock-low{background:#F6DED4;color:var(--bad);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;}
+  .stock-ok{background:#E1EFE5;color:var(--ok);font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;}
+
+  .bd-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
+  .bd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+  .bd-desc{font-size:13.5px;margin:6px 0;}
+  .bd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .btn-tiny{padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:11.5px;cursor:pointer;font-family:'IBM Plex Sans';}
+  .btn-tiny.danger{color:var(--bad);border-color:#E9B79B;}
+  .qty-adjust{display:flex;align-items:center;gap:8px;}
+  .qty-adjust button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:15px;cursor:pointer;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C7 2 3 6 3 11c0 6.5 9 11 9 11s9-4.5 9-11c0-5-4-9-9-9z" fill="#D6A24C"/><circle cx="12" cy="10.5" r="3.6" fill="#0F4C3A"/></svg>
+    </div>
+    <div>
+      <h1>FlotteMine</h1>
+      <span>GMAO flotte — sous-traitants miniers</span>
+    </div>
+  </div>
+  <button class="logout hidden" id="logout-btn" onclick="logout()">Se déconnecter</button>
+</header>
+
+<main>
+  <div id="config-check" class="config-warning hidden">
+    ⚠ Configuration Supabase manquante : ouvre ce fichier, renseigne <code>SUPABASE_URL</code> et <code>SUPABASE_ANON_KEY</code> en haut du script, et exécute le fichier <code>flottemine-schema.sql</code> dans ton projet Supabase.
+  </div>
+
+  <!-- ---- AUTH SCREEN ---- -->
+  <div id="auth-screen">
+    <h2 id="auth-title">Connexion</h2>
+    <div class="sub" id="auth-sub">Accédez au tableau de bord de votre flotte.</div>
+    <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="chef.parc@entreprise.ga"></div>
+    <div class="field"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button class="btn btn-primary" id="auth-submit" onclick="handleAuth()">Se connecter</button>
+    <div id="auth-error"></div>
+    <div class="switch-mode" id="switch-mode-text">
+      Nouveau client ? <a onclick="toggleAuthMode()">Créer un compte</a>
+    </div>
+  </div>
+
+  <!-- ---- ESSAI TERMINÉ / VERROUILLÉ ---- -->
+  <div id="locked-screen" class="hidden" style="max-width:420px;margin:60px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;text-align:center;">
+    <h2 style="margin:0 0 8px;">Essai gratuit terminé</h2>
+    <p style="color:var(--ink-soft);font-size:14px;line-height:1.5;">
+      Votre mois d'essai gratuit est arrivé à son terme. Contactez-nous pour activer votre abonnement et continuer à suivre votre flotte.
+    </p>
+    <p style="font-size:14px;margin-top:18px;">
+      <strong>Samuel</strong><br>
+      +241 77 719 076 / 076 262 952<br>
+      samuelekomo24@gmail.com
+    </p>
+    <button class="btn btn-secondary" style="margin-top:14px;" onclick="logout()">Se déconnecter</button>
+  </div>
+
+  <!-- ---- DASHBOARD ---- -->
+  <div id="dashboard" class="hidden">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')">Véhicules</button>
+      <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')">Pannes</button>
+      <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')">Pièces & Stock</button>
+    </div>
+
+    <!-- ===== ONGLET VÉHICULES ===== -->
+    <div id="tab-vehicles" class="tab-panel">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-total">0</b><span>véhicules suivis</span></div>
+        <div class="kpi"><b id="kpi-available">0</b><span>disponibles</span></div>
+        <div class="kpi"><b id="kpi-maintenance">0</b><span>en maintenance</span></div>
+        <div class="kpi"><b id="kpi-warn">0</b><span>à surveiller</span></div>
+        <div class="kpi"><b id="kpi-bad">0</b><span>urgents</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2>Parc de véhicules</h2>
+        <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
+        <div class="field"><label>Plaque d'immatriculation</label><input required id="nv-plate" placeholder="GA-1050-BL"></div>
+        <div class="field"><label>Modèle</label><input id="nv-model" value="Hilux GUN125"></div>
+        <div class="field"><label>Kilométrage actuel</label><input required type="number" id="nv-km" placeholder="15000"></div>
+        <div class="field"><label>Kilométrage à la dernière vidange</label><input required type="number" id="nv-lastservice" placeholder="10000"></div>
+        <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
+        <button class="btn btn-primary" type="submit">Ajouter</button>
+      </form>
+
+      <div class="grid-body">
+        <div id="list"><div class="empty-note">Chargement…</div></div>
+        <div class="detail" id="detail"><div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== ONGLET PANNES ===== -->
+    <div id="tab-breakdowns" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-bd-urgent">0</b><span>pannes urgentes</span></div>
+        <div class="kpi"><b id="kpi-bd-progress">0</b><span>en cours</span></div>
+        <div class="kpi"><b id="kpi-bd-open">0</b><span>ouvertes au total</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2>Pannes — priorités de réparation</h2>
+        <button class="btn btn-secondary" onclick="toggleEl('add-breakdown-form')">+ Signaler une panne</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-breakdown-form" onsubmit="addBreakdown(event)">
+        <div class="field"><label>Véhicule</label><select required id="nb-vehicle"></select></div>
+        <div class="field"><label>Description de la panne (optionnel si note vocale)</label><input id="nb-desc" placeholder="Ex : Fuite hydraulique essieu avant"></div>
+        <div class="field">
+          <label>Note vocale (optionnel)</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button type="button" class="btn-tiny" id="rec-btn" onclick="toggleRecording()">🎙️ Enregistrer</button>
+            <span id="rec-status" class="bstatus"></span>
+          </div>
+          <audio id="rec-preview" class="hidden" controls style="width:100%;margin-top:8px;"></audio>
+        </div>
+        <div class="field"><label>Priorité</label>
+          <select id="nb-priority">
+            <option value="urgente">Urgente</option>
+            <option value="moyenne" selected>Moyenne</option>
+            <option value="faible">Faible</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Enregistrer la panne</button>
+      </form>
+
+      <div id="breakdown-list"><div class="empty-note">Chargement…</div></div>
+    </div>
+
+    <!-- ===== ONGLET PIÈCES & STOCK ===== -->
+    <div id="tab-parts" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-parts-total">0</b><span>références en stock</span></div>
+        <div class="kpi"><b id="kpi-parts-low">0</b><span>stock bas</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2>Pièces détachées & stock</h2>
+        <button class="btn btn-secondary" onclick="toggleEl('add-part-form')">+ Ajouter une pièce</button>
+      </div>
+
+      <form class="inline-form hidden" id="add-part-form" onsubmit="addPart(event)">
+        <div class="field"><label>Nom de la pièce</label><input required id="np-name" placeholder="Ex : Filtre à huile"></div>
+        <div class="field"><label>Référence</label><input id="np-ref" placeholder="Ex : 90915-YZZD4"></div>
+        <div class="field"><label>Quantité en stock</label><input required type="number" id="np-qty" value="0"></div>
+        <div class="field"><label>Seuil d'alerte stock bas</label><input required type="number" id="np-min" value="2"></div>
+        <div class="field"><label>Prix unitaire (XAF, optionnel)</label><input type="number" id="np-price" placeholder="15000"></div>
+        <button class="btn btn-primary" type="submit">Ajouter la pièce</button>
+      </form>
+
+      <div class="grid-body">
+        <div id="parts-list"><div class="empty-note">Chargement…</div></div>
+        <div class="detail" id="parts-detail"><div class="empty-note">Sélectionnez une pièce pour la modifier.</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ==========================================================
+   1) CONFIGURATION — à remplir avec ton propre projet Supabase
+   Supabase → Project Settings → API
+   ========================================================== */
+const SUPABASE_URL = "https://pgoesbhdbmnjscmvsflv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
+
+let sb = null;
+let configured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
+if (configured) {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  document.getElementById('config-check').classList.remove('hidden');
+}
+
+/* ========================================================== */
+let authMode = 'login'; // 'login' | 'signup'
+let vehicles = [];
+let selectedId = null;
+let currentUser = null;
+
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  document.getElementById('auth-title').textContent = authMode === 'login' ? 'Connexion' : 'Créer un compte';
+  document.getElementById('auth-submit').textContent = authMode === 'login' ? 'Se connecter' : "Créer mon compte";
+  document.getElementById('switch-mode-text').innerHTML = authMode === 'login'
+    ? 'Nouveau client ? <a onclick="toggleAuthMode()">Créer un compte</a>'
+    : 'Déjà client ? <a onclick="toggleAuthMode()">Se connecter</a>';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function handleAuth(){
+  if(!configured){ document.getElementById('auth-error').textContent = "Configuration Supabase manquante — voir le message ci-dessus."; return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errorEl = document.getElementById('auth-error');
+  errorEl.textContent = '';
+  if(!email || !password){ errorEl.textContent = "Email et mot de passe requis."; return; }
+
+  let result;
+  if (authMode === 'login') {
+    result = await sb.auth.signInWithPassword({ email, password });
+  } else {
+    result = await sb.auth.signUp({ email, password });
+  }
+  if (result.error) { errorEl.textContent = result.error.message; return; }
+  if (authMode === 'signup' && !result.data.session) {
+    errorEl.style.color = 'var(--forest)';
+    errorEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer, puis connecte-toi.";
+    return;
+  }
+  await onLoggedIn();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser = null;
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('locked-screen').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('logout-btn').classList.add('hidden');
+}
+
+async function onLoggedIn(){
+  const { data } = await sb.auth.getUser();
+  currentUser = data.user;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('logout-btn').classList.remove('hidden');
+
+  const allowed = await checkSubscription();
+  if (!allowed) {
+    document.getElementById('locked-screen').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('dashboard').classList.remove('hidden');
+  await loadVehicles();
+  await loadBreakdowns();
+  await loadParts();
+}
+
+/* ---- Tabs ---- */
+function switchTab(name){
+  ['vehicles','breakdowns','parts'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+    document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
+  });
+}
+function toggleEl(id){ document.getElementById(id).classList.toggle('hidden'); }
+
+/* ---- Essai gratuit / abonnement ---- */
+const TRIAL_DAYS = 30;
+
+async function checkSubscription(){
+  // Cherche la ligne d'abonnement du client
+  let { data: sub } = await sb.from('subscriptions').select('*').eq('owner', currentUser.id).maybeSingle();
+
+  // 1ère connexion : on crée la ligne (démarre le compteur d'essai maintenant)
+  if (!sub) {
+    const { data: created } = await sb.from('subscriptions')
+      .insert({ owner: currentUser.id })
+      .select().single();
+    sub = created;
+  }
+
+  if (sub.is_paid) return true;
+
+  const daysElapsed = (Date.now() - new Date(sub.trial_start).getTime()) / 86400000;
+  return daysElapsed <= TRIAL_DAYS;
+}
+
+/* ---- Data loading ---- */
+async function loadVehicles(){
+  const { data: vList, error } = await sb.from('vehicles').select('*').order('created_at', { ascending: true });
+  if (error) { document.getElementById('list').innerHTML = `<div class="empty-note">Erreur de chargement : ${error.message}</div>`; return; }
+  vehicles = vList || [];
+  for (const v of vehicles) {
+    const { data: hist } = await sb.from('interventions').select('*').eq('vehicle_id', v.id).order('date', { ascending: false });
+    v.hist = hist || [];
+  }
+  if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
+  renderKpis();
+  renderList();
+  renderDetail();
+  const vsel = document.getElementById('nb-vehicle');
+  if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
+}
+
+function computeStatus(v){
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  if (remaining <= 0) return 'bad';
+  if (remaining <= 1000) return 'warn';
+  return 'ok';
+}
+function statusLabel(s){ return s==='ok' ? 'OK' : s==='warn' ? 'À surveiller' : 'Urgent'; }
+function nextText(v){
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  if (remaining <= 0) return `Vidange dépassée de ${Math.abs(remaining).toLocaleString('fr-FR')} km`;
+  return `Vidange dans ${remaining.toLocaleString('fr-FR')} km`;
+}
+
+function renderKpis(){
+  document.getElementById('kpi-total').textContent = vehicles.length;
+  document.getElementById('kpi-available').textContent = vehicles.filter(v=>v.availability!=='en_maintenance').length;
+  document.getElementById('kpi-maintenance').textContent = vehicles.filter(v=>v.availability==='en_maintenance').length;
+  document.getElementById('kpi-warn').textContent = vehicles.filter(v=>computeStatus(v)==='warn').length;
+  document.getElementById('kpi-bad').textContent = vehicles.filter(v=>computeStatus(v)==='bad').length;
+}
+
+function renderList(){
+  const el = document.getElementById('list');
+  if (!vehicles.length){ el.innerHTML = `<div class="empty-note">Aucun véhicule pour l'instant — ajoutez le premier ci-dessus.</div>`; return; }
+  el.innerHTML = '';
+  vehicles.forEach(v=>{
+    const s = computeStatus(v);
+    const card = document.createElement('div');
+    card.className = 'veh-card' + (v.id===selectedId ? ' selected':'');
+    card.innerHTML = `<div class="veh-top">
+        <b>${v.plate}</b>
+        <span class="status ${s}">${statusLabel(s)}</span>
+      </div>
+      <div class="veh-meta">${v.model} · ${v.km.toLocaleString('fr-FR')} km</div>
+      <div class="veh-meta">${nextText(v)}</div>
+      ${v.availability==='en_maintenance' ? `<div class="veh-meta" style="color:var(--warn);font-weight:600;">En maintenance${v.maintenance_until ? ' — sortie prévue le '+v.maintenance_until : ''}</div>` : ''}`;
+    card.onclick = ()=>{ selectedId = v.id; renderList(); renderDetail(); };
+    el.appendChild(card);
+  });
+}
+
+function renderDetail(){
+  const el = document.getElementById('detail');
+  const v = vehicles.find(x=>x.id===selectedId);
+  if(!v){ el.innerHTML = `<div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div>`; return; }
+  const s = computeStatus(v);
+  el.innerHTML = `
+    <h3>${v.plate}</h3>
+    <div class="sub">${v.model} — ${v.km.toLocaleString('fr-FR')} km</div>
+    <div class="row"><span class="k">Statut</span><span class="v">${statusLabel(s)}</span></div>
+    <div class="row"><span class="k">Prochaine échéance</span><span class="v">${nextText(v)}</span></div>
+    <div class="row"><span class="k">Disponibilité</span><span class="v">${v.availability==='en_maintenance' ? 'En maintenance' : 'Disponible'}</span></div>
+    ${v.availability==='en_maintenance' ? `<div class="row"><span class="k">Sortie prévue</span><span class="v">${v.maintenance_until || '—'}</span></div>` : ''}
+    ${s==='bad' ? `<div class="alert-box">⚠ Intervention à programmer sans délai.</div>` : ''}
+
+    ${v.availability==='disponible' ? `
+      <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="toggleEl('maint-form-${v.id}')">Mettre en maintenance</button>
+      <form class="inline-form hidden" id="maint-form-${v.id}" onsubmit="setMaintenance(event, '${v.id}')">
+        <div class="field"><label>Date de sortie prévue</label><input required type="date" id="maint-date-${v.id}"></div>
+        <button class="btn btn-primary" type="submit">Confirmer</button>
+      </form>
+    ` : `
+      <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="endMaintenance('${v.id}')">Remettre en service</button>
+    `}
+
+    <div>
+      <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Historique</span></div>
+      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${h.date}</div><div>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}</div></div>`).join('')
+        : '<div class="empty-note" style="padding:8px 0;">Aucune intervention enregistrée.</div>'}
+    </div>
+    <form class="inline-form" onsubmit="addIntervention(event, '${v.id}')">
+      <div class="field"><label>Nouvelle intervention</label><input required id="int-desc-${v.id}" placeholder="Ex : Vidange + filtres"></div>
+      <div class="field"><label>Kilométrage au moment de l'intervention</label><input required type="number" id="int-km-${v.id}" value="${v.km}"></div>
+      <button class="btn btn-primary" type="submit">Enregistrer l'intervention</button>
+    </form>
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')">Supprimer ce véhicule</button>
+  `;
+}
+
+/* ---- Pannes (breakdowns) ---- */
+let breakdowns = [];
+const prioRank = { urgente: 0, moyenne: 1, faible: 2 };
+
+async function loadBreakdowns(){
+  const { data, error } = await sb.from('breakdowns').select('*').order('created_at', { ascending: false });
+  if (error) { document.getElementById('breakdown-list').innerHTML = `<div class="empty-note">Erreur : ${error.message}</div>`; return; }
+  breakdowns = (data || []).sort((a,b)=>{
+    if (a.status==='resolue' && b.status!=='resolue') return 1;
+    if (b.status==='resolue' && a.status!=='resolue') return -1;
+    return prioRank[a.priority]-prioRank[b.priority];
+  });
+  renderBreakdownKpis();
+  renderBreakdownList();
+}
+
+function renderBreakdownKpis(){
+  document.getElementById('kpi-bd-urgent').textContent = breakdowns.filter(b=>b.priority==='urgente' && b.status!=='resolue').length;
+  document.getElementById('kpi-bd-progress').textContent = breakdowns.filter(b=>b.status==='en_cours').length;
+  document.getElementById('kpi-bd-open').textContent = breakdowns.filter(b=>b.status!=='resolue').length;
+}
+
+function vehiclePlate(id){ const v = vehicles.find(x=>x.id===id); return v ? v.plate : '—'; }
+function statusText(s){ return s==='ouverte'?'Ouverte':s==='en_cours'?'En cours':'Résolue'; }
+
+function renderBreakdownList(){
+  const el = document.getElementById('breakdown-list');
+  if (!breakdowns.length){ el.innerHTML = `<div class="empty-note">Aucune panne enregistrée.</div>`; return; }
+  el.innerHTML = '';
+  breakdowns.forEach(b=>{
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${vehiclePlate(b.vehicle_id)}</b>
+        <span class="prio ${b.priority}">${b.priority.charAt(0).toUpperCase()+b.priority.slice(1)}</span>
+      </div>
+      <div class="bd-desc">${b.description}</div>
+      ${b.voice_url ? `<audio controls src="${b.voice_url}" style="width:100%;margin:6px 0;"></audio>` : ''}
+      <div class="bstatus">Statut : ${statusText(b.status)} · signalée le ${b.reported_at}</div>
+      <div class="bd-actions">
+        ${b.status!=='en_cours' ? `<button class="btn-tiny" onclick="updateBreakdownStatus('${b.id}','en_cours')">Passer en cours</button>` : ''}
+        ${b.status!=='resolue' ? `<button class="btn-tiny" onclick="updateBreakdownStatus('${b.id}','resolue')">Marquer résolue</button>` : ''}
+        <button class="btn-tiny danger" onclick="deleteBreakdown('${b.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+/* ---- Note vocale ---- */
+let mediaRecorder = null;
+let audioChunks = [];
+let recordedBlob = null;
+
+async function toggleRecording(){
+  const btn = document.getElementById('rec-btn');
+  const status = document.getElementById('rec-status');
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    btn.textContent = '🎙️ Enregistrer';
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const preview = document.getElementById('rec-preview');
+      preview.src = URL.createObjectURL(recordedBlob);
+      preview.classList.remove('hidden');
+      status.textContent = 'Note vocale prête.';
+      stream.getTracks().forEach(t => t.stop());
+    };
+    mediaRecorder.start();
+    btn.textContent = '⏹ Arrêter';
+    status.textContent = 'Enregistrement en cours…';
+  } catch (err) {
+    status.textContent = "Micro non accessible : " + err.message;
+  }
+}
+
+async function addBreakdown(e){
+  e.preventDefault();
+  const vehicle_id = document.getElementById('nb-vehicle').value;
+  const description = document.getElementById('nb-desc').value.trim();
+  const priority = document.getElementById('nb-priority').value;
+  if (!vehicle_id) { alert("Ajoutez d'abord un véhicule."); return; }
+  if (!description && !recordedBlob) { alert("Ajoutez une description ou une note vocale."); return; }
+
+  let voice_url = null;
+  if (recordedBlob) {
+    const fileName = `${currentUser.id}/${Date.now()}.webm`;
+    const { error: upErr } = await sb.storage.from('voice-notes').upload(fileName, recordedBlob);
+    if (upErr) { alert("Erreur envoi de la note vocale : " + upErr.message); return; }
+    const { data: pub } = sb.storage.from('voice-notes').getPublicUrl(fileName);
+    voice_url = pub.publicUrl;
+  }
+
+  const { error } = await sb.from('breakdowns').insert([{ vehicle_id, description: description || '(note vocale)', priority, voice_url }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-breakdown-form').reset();
+  document.getElementById('add-breakdown-form').classList.add('hidden');
+  document.getElementById('rec-preview').classList.add('hidden');
+  document.getElementById('rec-status').textContent = '';
+  recordedBlob = null;
+  await loadBreakdowns();
+}
+
+async function updateBreakdownStatus(id, status){
+  const patch = { status };
+  if (status === 'resolue') patch.resolved_at = new Date().toISOString().slice(0,10);
+  const { error } = await sb.from('breakdowns').update(patch).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadBreakdowns();
+}
+
+async function deleteBreakdown(id){
+  if (!confirm("Supprimer cette panne ?")) return;
+  const { error } = await sb.from('breakdowns').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadBreakdowns();
+}
+
+/* ---- Pièces détachées & stock ---- */
+let parts = [];
+let selectedPartId = null;
+
+async function loadParts(){
+  const { data, error } = await sb.from('parts').select('*').order('name', { ascending: true });
+  if (error) { document.getElementById('parts-list').innerHTML = `<div class="empty-note">Erreur : ${error.message}</div>`; return; }
+  parts = data || [];
+  renderPartsKpis();
+  renderPartsList();
+  renderPartDetail();
+}
+
+function renderPartsKpis(){
+  document.getElementById('kpi-parts-total').textContent = parts.length;
+  document.getElementById('kpi-parts-low').textContent = parts.filter(p=>p.quantity<=p.min_quantity).length;
+}
+
+function renderPartsList(){
+  const el = document.getElementById('parts-list');
+  if (!parts.length){ el.innerHTML = `<div class="empty-note">Aucune pièce enregistrée — ajoutez-en une ci-dessus.</div>`; return; }
+  el.innerHTML = '';
+  parts.forEach(p=>{
+    const low = p.quantity <= p.min_quantity;
+    const card = document.createElement('div');
+    card.className = 'veh-card' + (p.id===selectedPartId ? ' selected':'');
+    card.innerHTML = `<div class="veh-top">
+        <b>${p.name}</b>
+        <span class="${low?'stock-low':'stock-ok'}">${low?'Stock bas':'OK'}</span>
+      </div>
+      <div class="veh-meta">${p.reference || 'Sans référence'}</div>
+      <div class="veh-meta">${p.quantity} en stock (seuil : ${p.min_quantity})</div>`;
+    card.onclick = ()=>{ selectedPartId = p.id; renderPartsList(); renderPartDetail(); };
+    el.appendChild(card);
+  });
+}
+
+function renderPartDetail(){
+  const el = document.getElementById('parts-detail');
+  const p = parts.find(x=>x.id===selectedPartId);
+  if(!p){ el.innerHTML = `<div class="empty-note">Sélectionnez une pièce pour la modifier.</div>`; return; }
+  el.innerHTML = `
+    <h3>${p.name}</h3>
+    <div class="sub">${p.reference || 'Sans référence'}</div>
+    <div class="row"><span class="k">Quantité en stock</span>
+      <span class="v qty-adjust">
+        <button onclick="adjustPartQty('${p.id}', -1)">−</button>
+        ${p.quantity}
+        <button onclick="adjustPartQty('${p.id}', 1)">+</button>
+      </span>
+    </div>
+    <div class="row"><span class="k">Seuil d'alerte</span><span class="v">${p.min_quantity}</span></div>
+    ${p.unit_price ? `<div class="row"><span class="k">Prix unitaire</span><span class="v">${Number(p.unit_price).toLocaleString('fr-FR')} XAF</span></div>` : ''}
+    ${p.quantity<=p.min_quantity ? `<div class="alert-box">⚠ Stock bas — pensez à réapprovisionner.</div>` : ''}
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="deletePart('${p.id}')">Supprimer cette pièce</button>
+  `;
+}
+
+async function addPart(e){
+  e.preventDefault();
+  const name = document.getElementById('np-name').value.trim();
+  const reference = document.getElementById('np-ref').value.trim();
+  const quantity = parseInt(document.getElementById('np-qty').value, 10);
+  const min_quantity = parseInt(document.getElementById('np-min').value, 10);
+  const priceRaw = document.getElementById('np-price').value;
+  const unit_price = priceRaw ? parseFloat(priceRaw) : null;
+  const { error } = await sb.from('parts').insert([{ name, reference, quantity, min_quantity, unit_price }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-part-form').reset();
+  document.getElementById('add-part-form').classList.add('hidden');
+  await loadParts();
+}
+
+async function adjustPartQty(id, delta){
+  const p = parts.find(x=>x.id===id);
+  if (!p) return;
+  const newQty = Math.max(0, p.quantity + delta);
+  const { error } = await sb.from('parts').update({ quantity: newQty }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadParts();
+}
+
+async function deletePart(id){
+  if (!confirm("Supprimer cette pièce ?")) return;
+  const { error } = await sb.from('parts').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  selectedPartId = null;
+  await loadParts();
+}
+
+/* ---- Forms ---- */
+function toggleAddForm(){ document.getElementById('add-vehicle-form').classList.toggle('hidden'); }
+
+async function addVehicle(e){
+  e.preventDefault();
+  const plate = document.getElementById('nv-plate').value.trim();
+  const model = document.getElementById('nv-model').value.trim() || 'Hilux GUN125';
+  const km = parseInt(document.getElementById('nv-km').value, 10);
+  const last_service_km = parseInt(document.getElementById('nv-lastservice').value, 10);
+  const service_interval_km = parseInt(document.getElementById('nv-interval').value, 10);
+  const { error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-vehicle-form').reset();
+  document.getElementById('add-vehicle-form').classList.add('hidden');
+  await loadVehicles();
+}
+
+async function deleteVehicle(id){
+  if (!confirm("Supprimer ce véhicule ? Son historique et ses pannes seront aussi supprimés.")) return;
+  const { error } = await sb.from('vehicles').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  selectedId = null;
+  await loadVehicles();
+  await loadBreakdowns();
+}
+
+async function setMaintenance(e, id){
+  e.preventDefault();
+  const date = document.getElementById(`maint-date-${id}`).value;
+  const { error } = await sb.from('vehicles').update({ availability: 'en_maintenance', maintenance_until: date }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
+}
+
+async function endMaintenance(id){
+  const { error } = await sb.from('vehicles').update({ availability: 'disponible', maintenance_until: null }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
+}
+
+async function addIntervention(e, vehicleId){
+  e.preventDefault();
+  const description = document.getElementById(`int-desc-${vehicleId}`).value.trim();
+  const km_at_service = parseInt(document.getElementById(`int-km-${vehicleId}`).value, 10);
+  const { error: e1 } = await sb.from('interventions').insert([{ vehicle_id: vehicleId, description, km_at_service, date: new Date().toISOString().slice(0,10) }]);
+  if (e1) { alert("Erreur : " + e1.message); return; }
+  // On considère l'intervention comme la dernière vidange de référence et on met à jour le kilométrage
+  const { error: e2 } = await sb.from('vehicles').update({ last_service_km: km_at_service, km: km_at_service }).eq('id', vehicleId);
+  if (e2) { alert("Erreur : " + e2.message); return; }
+  await loadVehicles();
+}
+
+/* ---- Boot ---- */
+(async function boot(){
+  if (!configured) return;
+  const { data } = await sb.auth.getSession();
+  if (data.session) { await onLoggedIn(); }
+})();
+</script>
+</body>
+</html>
