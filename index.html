@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0D1210">
 <style>
@@ -194,8 +195,19 @@
         <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Parc de véhicules</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-secondary" onclick="exportCSV()">⬇ Exporter (Excel/CSV)</button>
+          <button class="btn btn-secondary" onclick="toggleEl('import-panel')">⬆ Importer (XLS/CSV)</button>
           <button class="btn btn-secondary" onclick="toggleAddForm()">+ Ajouter un véhicule</button>
         </div>
+      </div>
+
+      <div class="inline-form hidden" id="import-panel">
+        <p style="margin:0 0 12px;font-size:13px;color:var(--ink-soft);">
+          Colonnes attendues : <b>Plaque</b>, Modèle, Kilométrage, KM dernière vidange, Intervalle entretien.
+          Pas encore le bon format ? <a href="#" onclick="downloadTemplate();return false;" style="color:var(--yellow);">Télécharger un modèle</a>.
+        </p>
+        <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="import-file" accept=".csv,.xlsx,.xls"></div>
+        <button class="btn btn-primary" onclick="parseImportFile()">Aperçu de l'import</button>
+        <div id="import-preview" style="margin-top:14px;"></div>
       </div>
 
       <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
@@ -861,6 +873,99 @@ function exportCSV(){
   URL.revokeObjectURL(url);
 }
 
+/* ---- Import Excel/CSV ---- */
+let importRows = [];
+
+function downloadTemplate(){
+  const csv = 'Plaque;Modèle;Kilométrage;KM dernière vidange;Intervalle entretien\nGA-1050-BL;Hilux GUN125;15000;10000;5000\n';
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'flottemine-modele-import.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function normalizeHeader(h){
+  return String(h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+
+const HEADER_ALIASES = {
+  plate: ['plaque',"plaque d'immatriculation",'plate','immatriculation'],
+  model: ['modele','model'],
+  km: ['kilometrage','km','kilometrage actuel'],
+  last_service_km: ['km derniere vidange','dernier km vidange','km dernier service','kilometrage derniere vidange'],
+  service_interval_km: ['intervalle entretien',"intervalle d'entretien",'intervalle','intervalle entretien (km)']
+};
+
+function mapRow(rawRow){
+  const out = {};
+  for (const key in rawRow) {
+    const norm = normalizeHeader(key);
+    for (const field in HEADER_ALIASES) {
+      if (HEADER_ALIASES[field].some(alias => norm === alias)) {
+        out[field] = rawRow[key];
+      }
+    }
+  }
+  return out;
+}
+
+function parseImportFile(){
+  const input = document.getElementById('import-file');
+  const preview = document.getElementById('import-preview');
+  if (!input.files[0]) { preview.innerHTML = '<div class="alert-box">Choisis un fichier d\'abord.</div>'; return; }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      importRows = [];
+      let errorCount = 0;
+      rawRows.forEach(r => {
+        const m = mapRow(r);
+        const plate = String(m.plate||'').trim();
+        const km = parseInt(m.km, 10);
+        if (!plate || isNaN(km)) { errorCount++; return; }
+        importRows.push({
+          plate,
+          model: String(m.model||'Hilux GUN125').trim() || 'Hilux GUN125',
+          km,
+          last_service_km: parseInt(m.last_service_km, 10) || 0,
+          service_interval_km: parseInt(m.service_interval_km, 10) || 5000
+        });
+      });
+      if (!importRows.length) {
+        preview.innerHTML = '<div class="alert-box">Aucune ligne valide trouvée. Vérifie que les colonnes Plaque et Kilométrage sont bien remplies.</div>';
+        return;
+      }
+      preview.innerHTML = `
+        <div class="empty-note" style="text-align:left;padding:0 0 10px;">
+          <b style="color:var(--ink);">${importRows.length} véhicule(s) prêt(s) à importer</b>${errorCount ? ` — ${errorCount} ligne(s) ignorée(s) (données manquantes)` : ''}
+        </div>
+        ${importRows.slice(0,5).map(r=>`<div class="veh-meta">• ${r.plate} — ${r.model} — ${r.km.toLocaleString('fr-FR')} km</div>`).join('')}
+        ${importRows.length>5 ? `<div class="veh-meta">... et ${importRows.length-5} autre(s)</div>` : ''}
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="confirmImport()">Confirmer l'import de ${importRows.length} véhicule(s)</button>
+      `;
+    } catch(err) {
+      preview.innerHTML = `<div class="alert-box">Fichier illisible : ${err.message}</div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function confirmImport(){
+  if (!importRows.length) return;
+  const { error } = await sb.from('vehicles').insert(importRows);
+  if (error) { alert("Erreur : " + error.message); return; }
+  importRows = [];
+  document.getElementById('import-preview').innerHTML = '';
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-panel').classList.add('hidden');
+  await loadVehicles();
+}
+
 /* ---- Boot ---- */
 (async function boot(){
   updateOfflineBanner();
@@ -870,3 +975,4 @@ function exportCSV(){
 })();
 </script>
 </body>
+</html>
