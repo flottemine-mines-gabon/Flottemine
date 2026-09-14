@@ -15,7 +15,7 @@
     --bg:#0D1210; --surface:#161C19; --surface-2:#1E2622; --surface-hover:#242D28;
     --ink:#F2F0EA; --ink-soft:#8FA095; --line:#2A332D;
     --yellow:#F5B301; --yellow-dim:#8A6B18; --rust:#C2542B;
-    --ok:#4CAF7D; --warn:#F5B301; --bad:#E5573F;
+    --ok:#4CAF7D; --warn:#F5B301; --bad:#E5573F; --info:#5B93F5;
     --radius:8px;
   }
   *{box-sizing:border-box;}
@@ -76,6 +76,7 @@
   .status.ok{background:rgba(76,175,125,.15);color:var(--ok);}
   .status.warn{background:rgba(245,179,1,.15);color:var(--warn);}
   .status.bad{background:rgba(229,87,63,.15);color:var(--bad);}
+  .status.info{background:rgba(91,147,245,.15);color:var(--info);}
 
   .detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:sticky;top:20px;}
   .detail h3{margin:0 0 2px;font-size:19px;}
@@ -119,6 +120,40 @@
   .btn-tiny.danger{color:var(--bad);border-color:rgba(229,87,63,.35);}
   .qty-adjust{display:flex;align-items:center;gap:8px;}
   .qty-adjust button{width:26px;height:26px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:15px;cursor:pointer;}
+
+  /* ---- Chauffeurs ---- */
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .filter-bar input[type="text"]{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:'IBM Plex Sans';background:var(--surface-2);color:var(--ink);}
+  .filter-bar select{padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:'IBM Plex Sans';background:var(--surface-2);color:var(--ink);}
+  .filter-bar input:focus, .filter-bar select:focus{outline:none;border-color:var(--yellow);}
+
+  .avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:var(--surface-2);border:1px solid var(--line);flex-shrink:0;}
+  .avatar-lg{width:76px;height:76px;border-radius:50%;object-fit:cover;background:var(--surface-2);border:1px solid var(--line);flex-shrink:0;}
+  .avatar-fallback{display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-family:'Space Grotesk';font-weight:600;}
+  .avatar-fallback.avatar{font-size:14px;}
+  .avatar-fallback.avatar-lg{font-size:24px;}
+
+  .driver-card{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s;}
+  .driver-card:hover{border-color:var(--yellow-dim);background:var(--surface-hover);}
+  .driver-card.selected{border-color:var(--yellow);}
+  .driver-main{flex:1;min-width:0;}
+  .driver-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .driver-top b{font-family:'Space Grotesk';font-weight:600;font-size:15px;}
+  .driver-name-wrap{min-width:0;}
+  .driver-name-wrap b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .driver-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .driver-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .status-select{padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:11.5px;font-family:'IBM Plex Sans';background:var(--surface-2);color:var(--ink);cursor:pointer;}
+  .alert-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(229,87,63,.15);color:var(--bad);}
+  .alert-chip.warn{background:rgba(245,179,1,.15);color:var(--warn);}
+
+  .alerts-panel{margin-bottom:18px;}
+  .alerts-panel .alert-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;font-family:'IBM Plex Sans';}
+  .alerts-panel .alert-row.warn{border-left-color:var(--warn);}
+  .alerts-panel .alert-row:hover{background:var(--surface-hover);}
+  .alerts-panel .alert-row b{font-family:'Space Grotesk';font-weight:600;}
+
+  .status-quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 
   /* ---- Offline banner ---- */
   #offline-banner{display:none;background:var(--yellow);color:#15130A;text-align:center;padding:9px 16px;font-size:12.8px;font-weight:600;font-family:'IBM Plex Sans';}
@@ -177,6 +212,7 @@
   <div id="dashboard" class="hidden">
     <div class="tabs">
       <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Véhicules</button>
+      <button class="tab-btn" id="tab-btn-drivers" onclick="switchTab('drivers')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Chauffeurs</button>
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
     </div>
@@ -222,6 +258,77 @@
       <div class="grid-body">
         <div id="list"><div class="empty-note">Chargement…</div></div>
         <div class="detail" id="detail"><div class="empty-note">Sélectionnez un véhicule pour voir le détail.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== ONGLET CHAUFFEURS ===== -->
+    <div id="tab-drivers" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-drv-total">0</b><span>chauffeurs</span></div>
+        <div class="kpi"><b id="kpi-drv-site">0</b><span>sur site</span></div>
+        <div class="kpi"><b id="kpi-drv-repos">0</b><span>en repos</span></div>
+        <div class="kpi"><b id="kpi-drv-libreville">0</b><span>à Libreville</span></div>
+        <div class="kpi"><b id="kpi-drv-conge">0</b><span>en congé</span></div>
+        <div class="kpi"><b id="kpi-drv-alerts" style="color:var(--bad);">0</b><span>alertes</span></div>
+      </div>
+
+      <div id="driver-alerts" class="alerts-panel"></div>
+
+      <div class="panel-title">
+        <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Chauffeurs</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="exportDriversCSV()">⬇ Exporter (Excel/CSV)</button>
+          <button class="btn btn-secondary" onclick="toggleEl('driver-import-panel')">⬆ Importer (XLS/CSV)</button>
+          <button class="btn btn-secondary" onclick="toggleEl('add-driver-form')">+ Ajouter un chauffeur</button>
+        </div>
+      </div>
+
+      <div class="inline-form hidden" id="driver-import-panel">
+        <p style="margin:0 0 12px;font-size:13px;color:var(--ink-soft);">
+          Colonnes attendues : <b>Nom</b>, Matricule, Téléphone, Statut (Sur site / En repos / À Libreville / En congé / Absent), Site, Depuis le, Permis N°, Expiration permis.
+          Pas encore le bon format ? <a href="#" onclick="downloadDriverTemplate();return false;" style="color:var(--yellow);">Télécharger un modèle</a>.
+        </p>
+        <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="driver-import-file" accept=".csv,.xlsx,.xls"></div>
+        <button class="btn btn-primary" onclick="parseDriverImportFile()">Aperçu de l'import</button>
+        <div id="driver-import-preview" style="margin-top:14px;"></div>
+      </div>
+
+      <form class="inline-form hidden" id="add-driver-form" onsubmit="addDriver(event)">
+        <div class="field"><label>Nom complet</label><input required id="nd-name" placeholder="Ex : Jean-Pierre Ondo"></div>
+        <div class="field"><label>Matricule</label><input id="nd-matricule" placeholder="Ex : CH-0042"></div>
+        <div class="field"><label>Téléphone</label><input id="nd-phone" placeholder="Ex : 074 12 34 56"></div>
+        <div class="field"><label>Statut actuel</label>
+          <select id="nd-status">
+            <option value="sur_site">Sur site</option>
+            <option value="repos">En repos</option>
+            <option value="libreville">À Libreville</option>
+            <option value="conge">En congé</option>
+            <option value="absent">Absent / indisponible</option>
+          </select>
+        </div>
+        <div class="field"><label>Site / localisation</label><input id="nd-site" placeholder="Ex : Site Moanda"></div>
+        <div class="field"><label>Véhicule assigné (optionnel)</label><select id="nd-vehicle" class="vehicle-select"><option value="">Aucun</option></select></div>
+        <div class="field"><label>N° de permis</label><input id="nd-license" placeholder="Ex : 123456/GA"></div>
+        <div class="field"><label>Expiration du permis</label><input type="date" id="nd-license-expiry"></div>
+        <div class="field"><label>Photo (identification)</label><input type="file" id="nd-photo" accept="image/*" capture="environment"></div>
+        <button class="btn btn-primary" type="submit">Ajouter le chauffeur</button>
+      </form>
+
+      <div class="filter-bar">
+        <input type="text" id="drv-search" placeholder="Rechercher un nom ou un matricule…" oninput="renderDriverList()">
+        <select id="drv-filter-status" onchange="renderDriverList()">
+          <option value="">Tous les statuts</option>
+          <option value="sur_site">Sur site</option>
+          <option value="repos">En repos</option>
+          <option value="libreville">À Libreville</option>
+          <option value="conge">En congé</option>
+          <option value="absent">Absent / indisponible</option>
+        </select>
+      </div>
+
+      <div class="grid-body">
+        <div id="driver-list"><div class="empty-note">Chargement…</div></div>
+        <div class="detail" id="driver-detail"><div class="empty-note">Sélectionnez un chauffeur pour voir le détail.</div></div>
       </div>
     </div>
 
@@ -335,7 +442,7 @@ function updateOfflineBanner(){
   }
 }
 window.addEventListener('offline', updateOfflineBanner);
-window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadBreakdowns(); loadParts(); } });
+window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); } });
 
 function cacheLocal(key, data){
   try {
@@ -403,13 +510,14 @@ async function onLoggedIn(){
 
   document.getElementById('dashboard').classList.remove('hidden');
   await loadVehicles();
+  await loadDrivers();
   await loadBreakdowns();
   await loadParts();
 }
 
 /* ---- Tabs ---- */
 function switchTab(name){
-  ['vehicles','breakdowns','parts'].forEach(t=>{
+  ['vehicles','drivers','breakdowns','parts'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
@@ -468,6 +576,16 @@ async function loadVehicles(){
   renderDetail();
   const vsel = document.getElementById('nb-vehicle');
   if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
+  populateVehicleSelects();
+}
+
+function populateVehicleSelects(){
+  document.querySelectorAll('select.vehicle-select').forEach(sel=>{
+    const current = sel.value;
+    const opts = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('');
+    sel.innerHTML = '<option value="">Aucun</option>' + opts;
+    if (current) sel.value = current;
+  });
 }
 
 function computeStatus(v){
@@ -549,6 +667,450 @@ function renderDetail(){
     </form>
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')">Supprimer ce véhicule</button>
   `;
+}
+
+/* ---- Chauffeurs ---- */
+let drivers = [];
+let selectedDriverId = null;
+let driverHistory = [];
+
+const DRIVER_STATUS_META = {
+  sur_site:  { label: 'Sur site',            badge: 'ok'   },
+  repos:     { label: 'En repos',            badge: 'info' },
+  libreville:{ label: 'À Libreville',        badge: 'info' },
+  conge:     { label: 'En congé',            badge: 'info' },
+  absent:    { label: 'Absent / indisponible', badge: 'warn' }
+};
+const REST_WARN_DAYS = 15;
+const REST_BAD_DAYS = 30;
+const LICENSE_WARN_DAYS = 30;
+
+function driverStatusLabel(s){ return (DRIVER_STATUS_META[s] || DRIVER_STATUS_META.sur_site).label; }
+function driverStatusBadge(s){ return (DRIVER_STATUS_META[s] || DRIVER_STATUS_META.sur_site).badge; }
+
+async function loadDrivers(){
+  if (!navigator.onLine) {
+    drivers = readLocal('drivers');
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail();
+    return;
+  }
+  const { data, error } = await sb.from('drivers').select('*').order('full_name', { ascending: true });
+  if (error) {
+    drivers = readLocal('drivers');
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail();
+    return;
+  }
+  drivers = data || [];
+  cacheLocal('drivers', drivers);
+  populateVehicleSelects();
+  renderDriverKpis();
+  renderDriverAlerts();
+  renderDriverList();
+  renderDriverDetail();
+}
+
+function daysSince(dateStr){
+  if (!dateStr) return 0;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+function daysUntil(dateStr){
+  if (!dateStr) return null;
+  return Math.floor((new Date(dateStr).getTime() - Date.now()) / 86400000);
+}
+
+function computeDriverAlerts(d){
+  const alerts = [];
+  if (d.status === 'repos') {
+    const ds = daysSince(d.status_since);
+    if (ds >= REST_BAD_DAYS) alerts.push({ level:'bad', text:`En repos depuis ${ds} jours — rotation à vérifier.` });
+    else if (ds >= REST_WARN_DAYS) alerts.push({ level:'warn', text:`En repos depuis ${ds} jours.` });
+  }
+  if (d.status === 'absent') {
+    alerts.push({ level:'bad', text:`Statut "Absent / indisponible" — à clarifier.` });
+  }
+  if (d.license_expiry) {
+    const du = daysUntil(d.license_expiry);
+    if (du < 0) alerts.push({ level:'bad', text:`Permis expiré depuis ${Math.abs(du)} jour(s).` });
+    else if (du <= LICENSE_WARN_DAYS) alerts.push({ level:'warn', text:`Permis expire dans ${du} jour(s).` });
+  }
+  return alerts;
+}
+function driverAlertLevel(alerts){
+  if (alerts.some(a=>a.level==='bad')) return 'bad';
+  if (alerts.some(a=>a.level==='warn')) return 'warn';
+  return null;
+}
+
+function renderDriverKpis(){
+  document.getElementById('kpi-drv-total').textContent = drivers.length;
+  document.getElementById('kpi-drv-site').textContent = drivers.filter(d=>d.status==='sur_site').length;
+  document.getElementById('kpi-drv-repos').textContent = drivers.filter(d=>d.status==='repos').length;
+  document.getElementById('kpi-drv-libreville').textContent = drivers.filter(d=>d.status==='libreville').length;
+  document.getElementById('kpi-drv-conge').textContent = drivers.filter(d=>d.status==='conge').length;
+  document.getElementById('kpi-drv-alerts').textContent = drivers.filter(d=>driverAlertLevel(computeDriverAlerts(d))).length;
+}
+
+function renderDriverAlerts(){
+  const el = document.getElementById('driver-alerts');
+  const withAlerts = drivers
+    .map(d => ({ d, alerts: computeDriverAlerts(d) }))
+    .filter(x => x.alerts.length)
+    .sort((a,b) => (driverAlertLevel(a.alerts)==='bad'?0:1) - (driverAlertLevel(b.alerts)==='bad'?0:1));
+  if (!withAlerts.length){ el.innerHTML = ''; return; }
+  el.innerHTML = withAlerts.map(({d,alerts}) => {
+    const lvl = driverAlertLevel(alerts);
+    return `<div class="alert-row ${lvl}" onclick="selectDriver('${d.id}')">
+      <span><b>${d.full_name}</b> — ${alerts.map(a=>a.text).join(' · ')}</span>
+      <span class="status ${driverStatusBadge(d.status)}">${driverStatusLabel(d.status)}</span>
+    </div>`;
+  }).join('');
+}
+
+function avatarHtml(d, size){
+  const cls = size === 'lg' ? 'avatar-lg' : 'avatar';
+  if (d.photo_url) return `<img class="${cls}" src="${d.photo_url}" alt="${d.full_name}">`;
+  const initials = (d.full_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+  return `<div class="${cls} avatar-fallback">${initials || '?'}</div>`;
+}
+
+function renderDriverList(){
+  const el = document.getElementById('driver-list');
+  const search = (document.getElementById('drv-search')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('drv-filter-status')?.value || '';
+  let filtered = drivers.filter(d => {
+    if (statusFilter && d.status !== statusFilter) return false;
+    if (search && !(`${d.full_name} ${d.matricule||''}`.toLowerCase().includes(search))) return false;
+    return true;
+  });
+  if (!drivers.length){ el.innerHTML = `<div class="empty-note">Aucun chauffeur pour l'instant — ajoutez le premier ci-dessus.</div>`; return; }
+  if (!filtered.length){ el.innerHTML = `<div class="empty-note">Aucun chauffeur ne correspond à la recherche.</div>`; return; }
+  el.innerHTML = '';
+  filtered.forEach(d=>{
+    const alerts = computeDriverAlerts(d);
+    const lvl = driverAlertLevel(alerts);
+    const card = document.createElement('div');
+    card.className = 'driver-card' + (d.id===selectedDriverId ? ' selected':'');
+    card.innerHTML = `
+      ${avatarHtml(d)}
+      <div class="driver-main">
+        <div class="driver-top">
+          <div class="driver-name-wrap">
+            <b>${d.full_name}</b>
+            <div class="driver-meta">${d.matricule ? d.matricule+' · ' : ''}${d.site || 'Site non renseigné'}</div>
+          </div>
+          <span class="status ${driverStatusBadge(d.status)}">${driverStatusLabel(d.status)}</span>
+        </div>
+        <div class="driver-meta">Depuis ${daysSince(d.status_since)} jour(s)${lvl ? ` · <span class="alert-chip ${lvl==='warn'?'warn':''}">⚠ alerte</span>` : ''}</div>
+        <div class="driver-actions">
+          <select class="status-select" onclick="event.stopPropagation()" onchange="quickChangeDriverStatus('${d.id}', this.value)">
+            ${Object.keys(DRIVER_STATUS_META).map(k=>`<option value="${k}" ${k===d.status?'selected':''}>${DRIVER_STATUS_META[k].label}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    card.onclick = ()=> selectDriver(d.id);
+    el.appendChild(card);
+  });
+}
+
+function selectDriver(id){
+  selectedDriverId = id;
+  renderDriverList();
+  renderDriverDetail();
+}
+
+async function quickChangeDriverStatus(id, newStatus){
+  await changeDriverStatus(id, newStatus, null);
+}
+
+async function changeDriverStatus(id, newStatus, note){
+  const today = new Date().toISOString().slice(0,10);
+  const { error } = await sb.from('drivers').update({ status: newStatus, status_since: today, status_note: note || null }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await sb.from('driver_status_history').insert([{ driver_id: id, status: newStatus, note: note || null }]);
+  await loadDrivers();
+  if (selectedDriverId === id) await loadDriverHistory(id);
+  renderDriverDetail();
+}
+
+async function loadDriverHistory(id){
+  if (!navigator.onLine) { driverHistory = []; return; }
+  const { data, error } = await sb.from('driver_status_history').select('*').eq('driver_id', id).order('changed_at', { ascending: false });
+  driverHistory = error ? [] : (data || []);
+}
+
+function vehiclePlateOrNone(id){ if (!id) return 'Aucun'; const v = vehicles.find(x=>x.id===id); return v ? v.plate+' — '+v.model : 'Aucun'; }
+
+async function renderDriverDetail(){
+  const el = document.getElementById('driver-detail');
+  const d = drivers.find(x=>x.id===selectedDriverId);
+  if(!d){ el.innerHTML = `<div class="empty-note">Sélectionnez un chauffeur pour voir le détail.</div>`; return; }
+  const alerts = computeDriverAlerts(d);
+  if (driverHistory.length === 0 || driverHistory[0]?.driver_id !== d.id) { await loadDriverHistory(d.id); }
+
+  el.innerHTML = `
+    <div style="display:flex;gap:14px;align-items:center;">
+      ${avatarHtml(d, 'lg')}
+      <div>
+        <h3 style="margin:0;">${d.full_name}</h3>
+        <div class="sub" style="margin-bottom:0;">${d.matricule || 'Sans matricule'}</div>
+      </div>
+    </div>
+    ${alerts.map(a=>`<div class="alert-box" style="${a.level==='warn' ? 'background:rgba(245,179,1,.12);border-color:rgba(245,179,1,.35);color:var(--warn);' : ''}">⚠ ${a.text}</div>`).join('')}
+
+    <div class="row"><span class="k">Statut</span><span class="v">${driverStatusLabel(d.status)}</span></div>
+    <div class="row"><span class="k">Depuis le</span><span class="v">${d.status_since || '—'} (${daysSince(d.status_since)} j)</span></div>
+    <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
+    <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
+    <div class="row"><span class="k">Véhicule assigné</span><span class="v">${vehiclePlateOrNone(d.vehicle_id)}</span></div>
+    <div class="row"><span class="k">N° de permis</span><span class="v">${d.license_number || '—'}</span></div>
+    <div class="row"><span class="k">Expiration permis</span><span class="v">${d.license_expiry || '—'}</span></div>
+    ${d.status_note ? `<div class="row"><span class="k">Note</span><span class="v">${d.status_note}</span></div>` : ''}
+
+    <div class="status-quick">
+      ${Object.keys(DRIVER_STATUS_META).map(k=>`<button class="btn-tiny" ${k===d.status?'disabled':''} onclick="openStatusForm('${d.id}','${k}')">${DRIVER_STATUS_META[k].label}</button>`).join('')}
+    </div>
+    <form class="inline-form hidden" id="status-form-${d.id}" onsubmit="submitStatusForm(event,'${d.id}')">
+      <input type="hidden" id="status-form-value-${d.id}">
+      <div class="field"><label>Note (optionnel)</label><input id="status-form-note-${d.id}" placeholder="Ex : parti ce matin, retour prévu le 20"></div>
+      <button class="btn btn-primary" type="submit">Confirmer le changement de statut</button>
+    </form>
+
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="toggleEl('edit-driver-form-${d.id}')">Modifier les informations</button>
+    <form class="inline-form hidden" id="edit-driver-form-${d.id}" onsubmit="updateDriver(event,'${d.id}')">
+      <div class="field"><label>Nom complet</label><input required id="ed-name-${d.id}" value="${d.full_name}"></div>
+      <div class="field"><label>Matricule</label><input id="ed-matricule-${d.id}" value="${d.matricule||''}"></div>
+      <div class="field"><label>Téléphone</label><input id="ed-phone-${d.id}" value="${d.phone||''}"></div>
+      <div class="field"><label>Site / localisation</label><input id="ed-site-${d.id}" value="${d.site||''}"></div>
+      <div class="field"><label>Véhicule assigné</label><select id="ed-vehicle-${d.id}" class="vehicle-select"></select></div>
+      <div class="field"><label>N° de permis</label><input id="ed-license-${d.id}" value="${d.license_number||''}"></div>
+      <div class="field"><label>Expiration du permis</label><input type="date" id="ed-license-expiry-${d.id}" value="${d.license_expiry||''}"></div>
+      <div class="field"><label>Nouvelle photo (optionnel)</label><input type="file" id="ed-photo-${d.id}" accept="image/*" capture="environment"></div>
+      <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
+    </form>
+
+    <div>
+      <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Historique des statuts</span></div>
+      ${driverHistory.length ? driverHistory.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${new Date(h.changed_at).toLocaleDateString('fr-FR')}</div><div>${driverStatusLabel(h.status)}${h.note ? ' — '+h.note : ''}</div></div>`).join('')
+        : '<div class="empty-note" style="padding:8px 0;">Aucun changement de statut enregistré.</div>'}
+    </div>
+
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteDriver('${d.id}')">Supprimer ce chauffeur</button>
+  `;
+  populateVehicleSelects();
+  const edSel = document.getElementById(`ed-vehicle-${d.id}`);
+  if (edSel) edSel.value = d.vehicle_id || '';
+}
+
+function openStatusForm(id, status){
+  document.getElementById(`status-form-value-${id}`).value = status;
+  document.getElementById(`status-form-${id}`).classList.remove('hidden');
+}
+async function submitStatusForm(e, id){
+  e.preventDefault();
+  const status = document.getElementById(`status-form-value-${id}`).value;
+  const note = document.getElementById(`status-form-note-${id}`).value.trim();
+  await changeDriverStatus(id, status, note);
+}
+
+async function uploadDriverPhoto(file){
+  const fileName = `${currentUser.id}/${Date.now()}-${file.name}`;
+  const { error } = await sb.storage.from('driver-photos').upload(fileName, file);
+  if (error) { alert("Erreur envoi de la photo : " + error.message); return null; }
+  const { data: pub } = sb.storage.from('driver-photos').getPublicUrl(fileName);
+  return pub.publicUrl;
+}
+
+async function addDriver(e){
+  e.preventDefault();
+  const full_name = document.getElementById('nd-name').value.trim();
+  const matricule = document.getElementById('nd-matricule').value.trim();
+  const phone = document.getElementById('nd-phone').value.trim();
+  const status = document.getElementById('nd-status').value;
+  const site = document.getElementById('nd-site').value.trim();
+  const vehicle_id = document.getElementById('nd-vehicle').value || null;
+  const license_number = document.getElementById('nd-license').value.trim();
+  const license_expiry = document.getElementById('nd-license-expiry').value || null;
+
+  let photo_url = null;
+  const photoInput = document.getElementById('nd-photo');
+  if (photoInput && photoInput.files[0]) {
+    photo_url = await uploadDriverPhoto(photoInput.files[0]);
+    if (photo_url === null) return;
+  }
+
+  const { error } = await sb.from('drivers').insert([{
+    full_name, matricule, phone, status, site, vehicle_id,
+    license_number, license_expiry, photo_url,
+    status_since: new Date().toISOString().slice(0,10)
+  }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-driver-form').reset();
+  document.getElementById('add-driver-form').classList.add('hidden');
+  await loadDrivers();
+}
+
+async function updateDriver(e, id){
+  e.preventDefault();
+  const patch = {
+    full_name: document.getElementById(`ed-name-${id}`).value.trim(),
+    matricule: document.getElementById(`ed-matricule-${id}`).value.trim(),
+    phone: document.getElementById(`ed-phone-${id}`).value.trim(),
+    site: document.getElementById(`ed-site-${id}`).value.trim(),
+    vehicle_id: document.getElementById(`ed-vehicle-${id}`).value || null,
+    license_number: document.getElementById(`ed-license-${id}`).value.trim(),
+    license_expiry: document.getElementById(`ed-license-expiry-${id}`).value || null
+  };
+  const photoInput = document.getElementById(`ed-photo-${id}`);
+  if (photoInput && photoInput.files[0]) {
+    const url = await uploadDriverPhoto(photoInput.files[0]);
+    if (url === null) return;
+    patch.photo_url = url;
+  }
+  const { error } = await sb.from('drivers').update(patch).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadDrivers();
+}
+
+async function deleteDriver(id){
+  if (!confirm("Supprimer ce chauffeur ? Son historique sera aussi supprimé.")) return;
+  const { error } = await sb.from('drivers').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  selectedDriverId = null;
+  await loadDrivers();
+}
+
+function exportDriversCSV(){
+  const header = ['Nom','Matricule','Téléphone','Statut','Site','Depuis le','Jours','Véhicule assigné','Permis N°','Expiration permis','Alertes'];
+  const rows = drivers.map(d=>[
+    d.full_name, d.matricule||'', d.phone||'', driverStatusLabel(d.status), d.site||'',
+    d.status_since||'', daysSince(d.status_since), vehiclePlateOrNone(d.vehicle_id),
+    d.license_number||'', d.license_expiry||'',
+    computeDriverAlerts(d).map(a=>a.text).join(' | ')
+  ]);
+  const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flottemine-chauffeurs-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---- Import Excel/CSV chauffeurs ---- */
+let importDriverRows = [];
+
+function downloadDriverTemplate(){
+  const csv = 'Nom;Matricule;Téléphone;Statut;Site;Depuis le;Permis N°;Expiration permis\nJean-Pierre Ondo;CH-0042;074123456;Sur site;Site Moanda;2026-09-01;123456/GA;2027-03-15\n';
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'flottemine-modele-chauffeurs.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+const DRIVER_HEADER_ALIASES = {
+  full_name: ['nom','nom complet','chauffeur','name'],
+  matricule: ['matricule','id','matricule chauffeur'],
+  phone: ['telephone','téléphone','tel','phone'],
+  status: ['statut','status'],
+  site: ['site','localisation','lieu'],
+  status_since: ['depuis le','date statut','depuis'],
+  license_number: ['permis n','permis n°','numero de permis','n de permis'],
+  license_expiry: ['expiration permis','expiration du permis','permis expiration']
+};
+const DRIVER_STATUS_IMPORT_ALIASES = {
+  sur_site: ['sur site', 'sur_site', 'present', 'présent'],
+  repos: ['en repos', 'repos'],
+  libreville: ['a libreville', 'à libreville', 'libreville'],
+  conge: ['en conge', 'en congé', 'conge', 'congé'],
+  absent: ['absent', 'indisponible']
+};
+
+function mapDriverRow(rawRow){
+  const out = {};
+  for (const key in rawRow) {
+    const norm = normalizeHeader(key);
+    for (const field in DRIVER_HEADER_ALIASES) {
+      if (DRIVER_HEADER_ALIASES[field].some(alias => norm === alias)) {
+        out[field] = rawRow[key];
+      }
+    }
+  }
+  return out;
+}
+function normalizeDriverStatus(raw){
+  const norm = normalizeHeader(raw);
+  for (const code in DRIVER_STATUS_IMPORT_ALIASES) {
+    if (DRIVER_STATUS_IMPORT_ALIASES[code].some(alias => norm === alias)) return code;
+  }
+  return 'sur_site';
+}
+function normalizeDriverDate(raw){
+  if (!raw) return new Date().toISOString().slice(0,10);
+  const s = String(raw).trim();
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? new Date().toISOString().slice(0,10) : d.toISOString().slice(0,10);
+}
+
+function parseDriverImportFile(){
+  const input = document.getElementById('driver-import-file');
+  const preview = document.getElementById('driver-import-preview');
+  if (!input.files[0]) { preview.innerHTML = '<div class="alert-box">Choisis un fichier d\'abord.</div>'; return; }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      importDriverRows = [];
+      let errorCount = 0;
+      rawRows.forEach(r => {
+        const m = mapDriverRow(r);
+        const full_name = String(m.full_name||'').trim();
+        if (!full_name) { errorCount++; return; }
+        importDriverRows.push({
+          full_name,
+          matricule: String(m.matricule||'').trim(),
+          phone: String(m.phone||'').trim(),
+          status: normalizeDriverStatus(m.status),
+          site: String(m.site||'').trim(),
+          status_since: normalizeDriverDate(m.status_since),
+          license_number: String(m.license_number||'').trim(),
+          license_expiry: m.license_expiry ? normalizeDriverDate(m.license_expiry) : null
+        });
+      });
+      if (!importDriverRows.length) {
+        preview.innerHTML = '<div class="alert-box">Aucune ligne valide trouvée. Vérifie que la colonne Nom est bien remplie.</div>';
+        return;
+      }
+      preview.innerHTML = `
+        <div class="empty-note" style="text-align:left;padding:0 0 10px;">
+          <b style="color:var(--ink);">${importDriverRows.length} chauffeur(s) prêt(s) à importer</b>${errorCount ? ` — ${errorCount} ligne(s) ignorée(s) (nom manquant)` : ''}
+        </div>
+        ${importDriverRows.slice(0,5).map(r=>`<div class="veh-meta">• ${r.full_name} — ${driverStatusLabel(r.status)}${r.site ? ' — '+r.site : ''}</div>`).join('')}
+        ${importDriverRows.length>5 ? `<div class="veh-meta">... et ${importDriverRows.length-5} autre(s)</div>` : ''}
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="confirmDriverImport()">Confirmer l'import de ${importDriverRows.length} chauffeur(s)</button>
+      `;
+    } catch(err) {
+      preview.innerHTML = `<div class="alert-box">Fichier illisible : ${err.message}</div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function confirmDriverImport(){
+  if (!importDriverRows.length) return;
+  const { error } = await sb.from('drivers').insert(importDriverRows);
+  if (error) { alert("Erreur : " + error.message); return; }
+  importDriverRows = [];
+  document.getElementById('driver-import-preview').innerHTML = '';
+  document.getElementById('driver-import-file').value = '';
+  document.getElementById('driver-import-panel').classList.add('hidden');
+  await loadDrivers();
 }
 
 /* ---- Pannes (breakdowns) ---- */
