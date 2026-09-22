@@ -1315,28 +1315,50 @@ async function confirmDriverImport(){
 /* ---- Scanner QR (chauffeurs & véhicules) ---- */
 let scanStream = null;
 let scanRAF = null;
+let scanTimeout = null;
+let scanStarting = false;
+const SCAN_INTERVAL_MS = 120; // ~8 lectures/seconde — largement suffisant, économise le CPU/la batterie
 
 async function startScan(){
   const video = document.getElementById('scan-video');
   const status = document.getElementById('scan-status');
-  if (typeof jsQR === 'undefined') { status.textContent = "Le lecteur QR n'a pas pu se charger (vérifie ta connexion)."; return; }
+  if (scanStarting || scanStream) return; // évite un double démarrage (double-tap)
+  if (typeof jsQR === 'undefined') { status.textContent = "Le lecteur QR n'a pas pu se charger. Recharge la page."; return; }
+  if (!window.isSecureContext) { status.textContent = "La caméra nécessite une connexion sécurisée (https://)."; return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { status.textContent = "Caméra non supportée par ce navigateur."; return; }
+
+  scanStarting = true;
+  status.textContent = 'Ouverture de la caméra…';
   try {
-    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 720 } }
+    });
   } catch(err) {
-    status.textContent = "Caméra non accessible : " + err.message;
+    scanStarting = false;
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      status.textContent = "Accès caméra refusé — autorise la caméra dans les réglages du navigateur pour ce site.";
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      status.textContent = "Aucune caméra détectée sur cet appareil.";
+    } else if (err.name === 'NotReadableError') {
+      status.textContent = "La caméra est déjà utilisée par une autre application.";
+    } else {
+      status.textContent = "Caméra non accessible : " + err.message;
+    }
     return;
   }
+  scanStarting = false;
   video.srcObject = scanStream;
-  await video.play();
+  try { await video.play(); } catch(e) {}
   document.getElementById('scan-start-btn').classList.add('hidden');
   document.getElementById('scan-stop-btn').classList.remove('hidden');
-  status.textContent = 'Scan en cours…';
+  status.textContent = 'Scan en cours… vise le QR code du badge.';
   document.getElementById('scan-result').innerHTML = '';
   scanLoop();
 }
 
 function stopScan(){
   if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+  if (scanTimeout) { clearTimeout(scanTimeout); scanTimeout = null; }
   if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
   const video = document.getElementById('scan-video');
   if (video) video.srcObject = null;
@@ -1348,11 +1370,16 @@ function scanLoop(){
   const video = document.getElementById('scan-video');
   const canvas = document.getElementById('scan-canvas');
   if (!video || !scanStream) return;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
+    // On n'analyse qu'un carré central (zone visée par le cadre à l'écran) :
+    // plus rapide à traiter et ça évite de capter un QR code hors-cadre.
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const side = Math.round(Math.min(vw, vh) * 0.85);
+    const sx = Math.round((vw - side) / 2), sy = Math.round((vh - side) / 2);
+    canvas.width = side; canvas.height = side;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, side, side);
+    const imageData = ctx.getImageData(0, 0, side, side);
     const code = jsQR(imageData.data, imageData.width, imageData.height);
     if (code && code.data) {
       handleScanResult(code.data);
@@ -1360,7 +1387,7 @@ function scanLoop(){
       return;
     }
   }
-  scanRAF = requestAnimationFrame(scanLoop);
+  scanTimeout = setTimeout(() => { scanRAF = requestAnimationFrame(scanLoop); }, SCAN_INTERVAL_MS);
 }
 
 function handleScanResult(text){
@@ -1377,11 +1404,18 @@ function manualScanLookup(){
   manualLookupText(text);
 }
 
+function looseNorm(s){ return String(s||'').toLowerCase().replace(/[\s-]/g,''); }
+
 function manualLookupText(text){
-  const norm = text.toLowerCase().trim();
-  const v = vehicles.find(x => x.plate.toLowerCase() === norm || fleetCode(x).toLowerCase() === norm);
+  const norm = looseNorm(text);
+  if (!norm) return;
+  // Correspondance exacte d'abord (plaque, matricule ou numéro interne, espaces/tirets ignorés)…
+  let v = vehicles.find(x => looseNorm(x.plate) === norm || looseNorm(fleetCode(x)) === norm);
+  let d = !v ? drivers.find(x => looseNorm(x.matricule) === norm || looseNorm(driverCode(x)) === norm) : null;
+  // …sinon correspondance partielle (utile si on ne tape qu'un bout de la plaque/du matricule)
+  if (!v && !d) v = vehicles.find(x => looseNorm(x.plate).includes(norm) || looseNorm(fleetCode(x)).includes(norm));
+  if (!v && !d) d = drivers.find(x => looseNorm(x.matricule).includes(norm) || looseNorm(driverCode(x)).includes(norm));
   if (v) { renderScanResultVehicle(v.id); return; }
-  const d = drivers.find(x => (x.matricule||'').toLowerCase() === norm || driverCode(x).toLowerCase() === norm);
   if (d) { renderScanResultDriver(d.id); return; }
   document.getElementById('scan-status').textContent = `Aucun résultat pour "${text}".`;
   document.getElementById('scan-result').innerHTML = '';
