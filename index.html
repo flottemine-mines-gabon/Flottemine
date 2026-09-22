@@ -1625,8 +1625,22 @@ function renderScanResultDriver(id){
   el.innerHTML = `
     <div class="scan-result">
       <div class="driver-top"><b>${d.full_name}</b><span class="status ${driverStatusBadge(d.status)}">${driverStatusIcon(d.status)}${driverStatusLabel(d.status)}</span></div>
-      <div class="driver-meta">${d.matricule || driverCode(d)} · ${d.site || 'Site non renseigné'}</div>
-      <div class="driver-meta">Depuis ${daysSince(d.status_since)} jour(s)${countdownChipHtml(d)}</div>
+      <div class="driver-meta">${d.matricule || driverCode(d)}</div>
+
+      <div class="row"><span class="k">Statut</span><span class="v" style="display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;">${driverStatusIcon(d.status)}${driverStatusLabel(d.status)}</span></div>
+      <div class="row"><span class="k">Depuis le</span><span class="v">${d.status_since || '—'} (${daysSince(d.status_since)} j)</span></div>
+      ${d.status === 'sur_site' ? `<div class="row"><span class="k">Durée de rotation</span><span class="v">${d.rotation_days||14} jours</span></div>
+      <div class="row"><span class="k">Jours restants avant sortie</span><span class="v">${(() => { const r = daysRemainingOnSite(d); return r < 0 ? `Dépassé de ${Math.abs(r)} j` : `${r} j`; })()}</span></div>` : ''}
+      ${d.status === 'libreville' ? (() => { const info = librevilleInfo(d); return `
+      <div class="row"><span class="k">Phase actuelle</span><span class="v">${info.label}</span></div>
+      <div class="row"><span class="k">Jours restants dans cette phase</span><span class="v">${info.overdue > 0 ? `Séjour dépassé de ${info.overdue} j` : `${info.daysRemainingInPhase} j`}</span></div>
+      `; })() : ''}
+      <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
+      <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
+      <div class="row"><span class="k">Véhicule assigné</span><span class="v">${vehiclePlateOrNone(d.vehicle_id)}</span></div>
+      <div class="row"><span class="k">N° de permis</span><span class="v">${d.license_number || '—'}</span></div>
+      <div class="row"><span class="k">Expiration permis</span><span class="v">${d.license_expiry || '—'}</span></div>
+
       <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="goToDriver('${d.id}')">Voir la fiche complète<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
     </div>`;
 }
