@@ -752,7 +752,7 @@ function renderDetail(){
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')">Supprimer ce véhicule</button>
   `;
   populateCategorySelects(v.category);
-  renderQrToCanvas(document.getElementById(`qr-vehicle-${v.id}`), JSON.stringify({ type: 'vehicle', id: v.id, plate: v.plate, fleet_number: fleetCode(v) }));
+  renderQrToCanvas(document.getElementById(`qr-vehicle-${v.id}`), JSON.stringify({ type: 'vehicle', plate: v.plate, fleet_number: fleetCode(v) }));
 }
 
 /* ---- Codes internes & QR codes ---- */
@@ -762,7 +762,7 @@ function driverCode(d){ return d.driver_code ? 'CH-' + String(d.driver_code).pad
 async function renderQrToCanvas(canvasEl, text){
   if (!canvasEl || typeof QRCode === 'undefined') return;
   try {
-    await QRCode.toCanvas(canvasEl, text, { width: 140, margin: 1, color: { dark: '#0D1210', light: '#FFFFFF' } });
+    await QRCode.toCanvas(canvasEl, text, { width: 220, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#0D1210', light: '#FFFFFF' } });
   } catch(e) { /* librairie QR non chargée (hors ligne) */ }
 }
 
@@ -1087,8 +1087,7 @@ async function renderDriverDetail(){
   const edSel = document.getElementById(`ed-vehicle-${d.id}`);
   if (edSel) edSel.value = d.vehicle_id || '';
   renderQrToCanvas(document.getElementById(`qr-driver-${d.id}`), JSON.stringify({
-    type: 'driver', id: d.id, matricule: d.matricule || driverCode(d),
-    full_name: d.full_name, phone: d.phone || '', license_number: d.license_number || ''
+    type: 'driver', matricule: d.matricule || driverCode(d), full_name: d.full_name
   }));
 }
 
@@ -1393,8 +1392,8 @@ function scanLoop(){
 function handleScanResult(text){
   let parsed = null;
   try { parsed = JSON.parse(text); } catch(e) {}
-  if (parsed && parsed.type === 'vehicle' && parsed.id) { renderScanResultVehicle(parsed.id); return; }
-  if (parsed && parsed.type === 'driver' && parsed.id) { renderScanResultDriver(parsed.id); return; }
+  if (parsed && parsed.type === 'vehicle' && parsed.plate) { manualLookupText(parsed.plate); return; }
+  if (parsed && parsed.type === 'driver' && parsed.matricule) { manualLookupText(parsed.matricule); return; }
   manualLookupText(text);
 }
 
