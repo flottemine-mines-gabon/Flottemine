@@ -170,6 +170,7 @@
   .qr-label{text-align:center;}
   .qr-label b{display:block;font-family:'Space Grotesk';font-size:15px;letter-spacing:0.02em;}
   .qr-label span{display:block;font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono';margin-top:2px;}
+  .badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
 
   /* ---- Scanner ---- */
   .scan-wrap{max-width:480px;margin:0 auto;text-align:center;}
@@ -239,6 +240,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Véhicules</button>
       <button class="tab-btn" id="tab-btn-drivers" onclick="switchTab('drivers')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Chauffeurs</button>
+      <button class="tab-btn" id="tab-btn-badges" onclick="switchTab('badges')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>Badges QR</button>
       <button class="tab-btn" id="tab-btn-scan" onclick="switchTab('scan')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>Scanner</button>
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
@@ -282,6 +284,18 @@
         <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
         <button class="btn btn-primary" type="submit">Ajouter</button>
       </form>
+
+      <div class="hidden" id="new-vehicle-qr-panel">
+        <div class="qr-block">
+          <canvas id="qr-new-vehicle"></canvas>
+          <div class="qr-label"><b id="new-vehicle-qr-title"></b><span id="new-vehicle-qr-sub"></span></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-tiny" id="new-vehicle-qr-download">Télécharger le badge QR</button>
+            <button class="btn-tiny" id="new-vehicle-qr-print">Imprimer le badge QR</button>
+            <button class="btn-tiny" onclick="toggleEl('new-vehicle-qr-panel')">Fermer</button>
+          </div>
+        </div>
+      </div>
 
       <div class="grid-body">
         <div id="list"><div class="empty-note">Chargement…</div></div>
@@ -348,6 +362,18 @@
         <button class="btn btn-primary" type="submit">Ajouter le chauffeur</button>
       </form>
 
+      <div class="hidden" id="new-driver-qr-panel">
+        <div class="qr-block">
+          <canvas id="qr-new-driver"></canvas>
+          <div class="qr-label"><b id="new-driver-qr-title"></b><span id="new-driver-qr-sub"></span></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-tiny" id="new-driver-qr-download">Télécharger le badge QR</button>
+            <button class="btn-tiny" id="new-driver-qr-print">Imprimer le badge QR</button>
+            <button class="btn-tiny" onclick="toggleEl('new-driver-qr-panel')">Fermer</button>
+          </div>
+        </div>
+      </div>
+
       <div class="filter-bar">
         <input type="text" id="drv-search" placeholder="Rechercher un nom ou un matricule…" oninput="renderDriverList()">
         <select id="drv-filter-status" onchange="renderDriverList()">
@@ -364,6 +390,17 @@
         <div id="driver-list"><div class="empty-note">Chargement…</div></div>
         <div class="detail" id="driver-detail"><div class="empty-note">Sélectionnez un chauffeur pour voir le détail.</div></div>
       </div>
+    </div>
+
+    <!-- ===== ONGLET BADGES QR ===== -->
+    <div id="tab-badges" class="tab-panel hidden">
+      <div class="panel-title">
+        <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>Badges QR</h2>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="badges-search" placeholder="Rechercher une plaque, un nom, un matricule…" oninput="renderBadgesTab()">
+      </div>
+      <div id="badges-list"><div class="empty-note">Chargement…</div></div>
     </div>
 
     <!-- ===== ONGLET SCANNER ===== -->
@@ -578,10 +615,11 @@ async function onLoggedIn(){
 /* ---- Tabs ---- */
 function switchTab(name){
   if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
-  ['vehicles','drivers','scan','breakdowns','parts'].forEach(t=>{
+  ['vehicles','drivers','badges','scan','breakdowns','parts'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
+  if (name === 'badges') renderBadgesTab();
 }
 function toggleEl(id){ document.getElementById(id).classList.toggle('hidden'); }
 
@@ -712,7 +750,10 @@ function renderDetail(){
     <div class="qr-block">
       <canvas id="qr-vehicle-${v.id}"></canvas>
       <div class="qr-label"><b>${v.plate}</b><span>${fleetCode(v)}</span></div>
-      <button class="btn-tiny" onclick="downloadQr('qr-vehicle-${v.id}','badge-${v.plate}')">Télécharger le badge QR</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-tiny" onclick="downloadQr('qr-vehicle-${v.id}','badge-${v.plate}')">Télécharger</button>
+        <button class="btn-tiny" onclick="printQr('qr-vehicle-${v.id}','${jsAttrEscape(v.plate)}','${jsAttrEscape(fleetCode(v))}')">Imprimer</button>
+      </div>
     </div>
 
     ${v.availability==='disponible' ? `
@@ -761,6 +802,115 @@ function downloadQr(canvasId, filename){
   a.download = `${filename}.png`;
   a.click();
 }
+
+function printQr(canvasId, title, subtitle){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dataUrl = canvas.toDataURL('image/png');
+  const w = window.open('', '_blank', 'width=400,height=520');
+  if (!w) { alert("Le navigateur a bloqué la fenêtre d'impression — autorise les pop-ups pour ce site."); return; }
+  const doc = w.document;
+  doc.title = title || 'Badge QR';
+  const style = doc.createElement('style');
+  style.textContent = 'body{font-family:sans-serif;text-align:center;padding:24px;}img{width:220px;height:220px;}h3{margin:14px 0 2px;}p{margin:0;color:#555;font-size:13px;}';
+  doc.head.appendChild(style);
+  const img = doc.createElement('img');
+  img.onload = () => { w.focus(); w.print(); };
+  img.src = dataUrl;
+  doc.body.appendChild(img);
+  const h3 = doc.createElement('h3');
+  h3.textContent = title || '';
+  doc.body.appendChild(h3);
+  if (subtitle) {
+    const p = doc.createElement('p');
+    p.textContent = subtitle;
+    doc.body.appendChild(p);
+  }
+}
+
+function jsAttrEscape(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+/* ---- QR affiché juste après création (chauffeur / véhicule) ---- */
+function showCreatedQr(kind, record){
+  const isVehicle = kind === 'vehicle';
+  const panel = document.getElementById(isVehicle ? 'new-vehicle-qr-panel' : 'new-driver-qr-panel');
+  const canvas = document.getElementById(isVehicle ? 'qr-new-vehicle' : 'qr-new-driver');
+  const titleEl = document.getElementById(isVehicle ? 'new-vehicle-qr-title' : 'new-driver-qr-title');
+  const subEl = document.getElementById(isVehicle ? 'new-vehicle-qr-sub' : 'new-driver-qr-sub');
+  const downloadBtn = document.getElementById(isVehicle ? 'new-vehicle-qr-download' : 'new-driver-qr-download');
+  const printBtn = document.getElementById(isVehicle ? 'new-vehicle-qr-print' : 'new-driver-qr-print');
+  if (!panel || !canvas) return;
+
+  const title = isVehicle ? record.plate : record.full_name;
+  const sub = isVehicle ? fleetCode(record) : (record.matricule || driverCode(record));
+  const filename = `badge-${isVehicle ? record.plate : (record.matricule || driverCode(record))}`;
+  const payload = isVehicle
+    ? JSON.stringify({ type: 'vehicle', id: record.id, plate: record.plate, fleet_number: fleetCode(record) })
+    : JSON.stringify({ type: 'driver', id: record.id, matricule: record.matricule || driverCode(record), full_name: record.full_name, phone: record.phone || '', license_number: record.license_number || '' });
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+  downloadBtn.onclick = () => downloadQr(canvas.id, filename);
+  printBtn.onclick = () => printQr(canvas.id, title, sub);
+  panel.classList.remove('hidden');
+  renderQrToCanvas(canvas, payload);
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ---- Page "Badges QR" : liste de tous les QR codes déjà générés ---- */
+function renderBadgesTab(){
+  const el = document.getElementById('badges-list');
+  if (!el) return;
+  const search = (document.getElementById('badges-search')?.value || '').toLowerCase().trim();
+  const vItems = vehicles.filter(v => !search || (v.plate||'').toLowerCase().includes(search) || fleetCode(v).toLowerCase().includes(search));
+  const dItems = drivers.filter(d => !search || (d.full_name||'').toLowerCase().includes(search) || (d.matricule||'').toLowerCase().includes(search));
+
+  if (!vItems.length && !dItems.length){ el.innerHTML = '<div class="empty-note">Aucun badge à afficher.</div>'; return; }
+
+  el.innerHTML = `
+    ${vItems.length ? `<div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Véhicules</span></div><div class="badges-grid">${vItems.map(v=>`
+      <div class="qr-block" data-badge-kind="vehicle" data-badge-id="${v.id}">
+        <canvas id="qr-badge-vehicle-${v.id}"></canvas>
+        <div class="qr-label"><b>${v.plate}</b><span>${fleetCode(v)}</span></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-tiny" data-action="download">Télécharger</button>
+          <button class="btn-tiny" data-action="print">Imprimer</button>
+        </div>
+      </div>`).join('')}</div>` : ''}
+    ${dItems.length ? `<div class="row" style="border:none;padding-bottom:2px;margin-top:${vItems.length?'18px':'0'};"><span class="k" style="font-weight:600;">Chauffeurs</span></div><div class="badges-grid">${dItems.map(d=>`
+      <div class="qr-block" data-badge-kind="driver" data-badge-id="${d.id}">
+        <canvas id="qr-badge-driver-${d.id}"></canvas>
+        <div class="qr-label"><b>${d.full_name}</b><span>${d.matricule || driverCode(d)}</span></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-tiny" data-action="download">Télécharger</button>
+          <button class="btn-tiny" data-action="print">Imprimer</button>
+        </div>
+      </div>`).join('')}</div>` : ''}
+  `;
+
+  vItems.forEach(v => renderQrToCanvas(document.getElementById(`qr-badge-vehicle-${v.id}`), JSON.stringify({ type: 'vehicle', id: v.id, plate: v.plate, fleet_number: fleetCode(v) })));
+  dItems.forEach(d => renderQrToCanvas(document.getElementById(`qr-badge-driver-${d.id}`), JSON.stringify({
+    type: 'driver', id: d.id, matricule: d.matricule || driverCode(d),
+    full_name: d.full_name, phone: d.phone || '', license_number: d.license_number || ''
+  })));
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#badges-list [data-action]');
+  if (!btn) return;
+  const block = btn.closest('[data-badge-id]');
+  if (!block) return;
+  const kind = block.dataset.badgeKind;
+  const id = block.dataset.badgeId;
+  const record = kind === 'vehicle' ? vehicles.find(v=>v.id===id) : drivers.find(d=>d.id===id);
+  if (!record) return;
+  const canvasId = `qr-badge-${kind}-${id}`;
+  const title = kind === 'vehicle' ? record.plate : record.full_name;
+  const sub = kind === 'vehicle' ? fleetCode(record) : (record.matricule || driverCode(record));
+  const filename = `badge-${kind === 'vehicle' ? record.plate : (record.matricule || driverCode(record))}`;
+  if (btn.dataset.action === 'download') downloadQr(canvasId, filename);
+  else if (btn.dataset.action === 'print') printQr(canvasId, title, sub);
+});
 
 /* ---- Catégories de véhicules (extensible) ---- */
 const DEFAULT_VEHICLE_CATEGORIES = ['Véhicule léger', 'Poids lourd', 'Engin'];
@@ -1020,7 +1170,10 @@ async function renderDriverDetail(){
     <div class="qr-block">
       <canvas id="qr-driver-${d.id}"></canvas>
       <div class="qr-label"><b>${d.matricule || driverCode(d)}</b></div>
-      <button class="btn-tiny" onclick="downloadQr('qr-driver-${d.id}','badge-${d.matricule || driverCode(d)}')">Télécharger le badge QR</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-tiny" onclick="downloadQr('qr-driver-${d.id}','badge-${d.matricule || driverCode(d)}')">Télécharger</button>
+        <button class="btn-tiny" onclick="printQr('qr-driver-${d.id}','${jsAttrEscape(d.full_name)}','${jsAttrEscape(d.matricule || driverCode(d))}')">Imprimer</button>
+      </div>
     </div>
 
     <div class="row"><span class="k">Statut</span><span class="v">${driverStatusLabel(d.status)}</span></div>
@@ -1124,11 +1277,13 @@ async function addDriver(e){
   }]).select();
   if (error) { alert("Erreur : " + error.message); return; }
   if (!matricule && created && created[0]) {
-    await sb.from('drivers').update({ matricule: driverCode(created[0]) }).eq('id', created[0].id);
+    created[0].matricule = driverCode(created[0]);
+    await sb.from('drivers').update({ matricule: created[0].matricule }).eq('id', created[0].id);
   }
   document.getElementById('add-driver-form').reset();
   document.getElementById('add-driver-form').classList.add('hidden');
   await loadDrivers();
+  if (created && created[0]) showCreatedQr('driver', created[0]);
 }
 
 async function updateDriver(e, id){
@@ -1665,11 +1820,12 @@ async function addVehicle(e){
   const service_interval_km = parseInt(document.getElementById('nv-interval').value, 10);
   const categoryRaw = document.getElementById('nv-category').value;
   const category = categoryRaw === '__new__' ? DEFAULT_VEHICLE_CATEGORIES[0] : categoryRaw;
-  const { error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km, category }]);
+  const { data: created, error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km, category }]).select();
   if (error) { alert("Erreur : " + error.message); return; }
   document.getElementById('add-vehicle-form').reset();
   document.getElementById('add-vehicle-form').classList.add('hidden');
   await loadVehicles();
+  if (created && created[0]) showCreatedQr('vehicle', created[0]);
 }
 
 async function deleteVehicle(id){
