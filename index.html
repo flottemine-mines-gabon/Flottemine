@@ -43,7 +43,7 @@ Minimum version required to store current data is: `+i+`.
     --yellow:#FFB800; --yellow-dim:#9C7A1E; --rust:#C2542B;
     --ok:#4CAF7D; --warn:#FFB800; --bad:#E5573F; --info:#5B93F5;
     --accent-vehicles:#5B93F5; --accent-drivers:#9B7FE8; --accent-scan:#3FB6A8;
-    --accent-breakdowns:#E5573F; --accent-parts:#C2542B;
+    --accent-breakdowns:#E5573F; --accent-parts:#C2542B; --accent-stats:#D9A441;
     --radius:8px;
   }
   *{box-sizing:border-box;}
@@ -98,11 +98,24 @@ Minimum version required to store current data is: `+i+`.
   .section-icon.acc-scan{background:var(--accent-scan);}
   .section-icon.acc-breakdowns{background:var(--accent-breakdowns);}
   .section-icon.acc-parts{background:var(--accent-parts);}
+  .section-icon.acc-stats{background:var(--accent-stats);}
   #tab-btn-vehicles:not(.active) svg{color:var(--accent-vehicles);}
   #tab-btn-drivers:not(.active) svg{color:var(--accent-drivers);}
   #tab-btn-scan:not(.active) svg{color:var(--accent-scan);}
   #tab-btn-breakdowns:not(.active) svg{color:var(--accent-breakdowns);}
   #tab-btn-parts:not(.active) svg{color:var(--accent-parts);}
+  #tab-btn-stats:not(.active) svg{color:var(--accent-stats);}
+
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+  .bar-row .bar-label{width:180px;flex-shrink:0;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'IBM Plex Sans';}
+  .bar-track{flex:1;height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;}
+  .bar-count{width:30px;text-align:right;flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--ink);font-family:'IBM Plex Mono';}
+  .stats-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;}
+  .stats-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Sans';}
+  .stats-table th{text-align:left;font-size:11.5px;font-weight:600;color:var(--ink-soft);padding:6px 10px;border-bottom:1px solid var(--line);}
+  .stats-table td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
+  .stats-table tr:last-child td{border-bottom:none;}
 
   .grid-body{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
   @media (max-width:820px){ .grid-body{grid-template-columns:1fr;} }
@@ -290,6 +303,7 @@ Minimum version required to store current data is: `+i+`.
       <button class="tab-btn" id="tab-btn-scan" onclick="switchTab('scan')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>Scanner</button>
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
+      <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="6" width="3" height="12"/></svg>Tableau de bord</button>
     </div>
 
     <!-- ===== ONGLET VÉHICULES ===== -->
@@ -507,6 +521,38 @@ Minimum version required to store current data is: `+i+`.
         <div class="detail" id="parts-detail"><div class="empty-note">Sélectionnez une pièce pour la modifier.</div></div>
       </div>
     </div>
+
+    <!-- ===== ONGLET TABLEAU DE BORD ===== -->
+    <div id="tab-stats" class="tab-panel hidden">
+      <div class="kpi-row">
+        <div class="kpi"><b id="kpi-stats-pannes-total">0</b><span>pannes au total</span></div>
+        <div class="kpi"><b id="kpi-stats-pannes-open">0</b><span>pannes ouvertes</span></div>
+        <div class="kpi"><b id="kpi-stats-pannes-month">0</b><span>pannes ce mois-ci</span></div>
+        <div class="kpi"><b id="kpi-stats-interventions-total">0</b><span>réparations effectuées</span></div>
+        <div class="kpi"><b id="kpi-stats-cost-month">0</b><span>XAF dépensés ce mois-ci</span></div>
+      </div>
+
+      <div class="panel-title">
+        <h2><span class="section-icon acc-stats"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>Pannes les plus fréquentes</h2>
+      </div>
+      <div class="stats-block">
+        <div id="stats-frequent-breakdowns"><div class="empty-note">Aucune panne enregistrée.</div></div>
+      </div>
+
+      <div class="panel-title">
+        <h2><span class="section-icon acc-stats"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg></span>Véhicules réparés ce mois-ci</h2>
+      </div>
+      <div class="stats-block">
+        <div id="stats-repaired-this-month"><div class="empty-note">Aucune réparation ce mois-ci.</div></div>
+      </div>
+
+      <div class="panel-title">
+        <h2><span class="section-icon acc-breakdowns"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Véhicules les plus à risque</h2>
+      </div>
+      <div class="stats-block">
+        <div id="stats-problem-vehicles"><div class="empty-note">Aucune panne enregistrée.</div></div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -645,10 +691,11 @@ async function onLoggedIn(user, opts){
 /* ---- Tabs ---- */
 function switchTab(name){
   if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
-  ['vehicles','drivers','scan','breakdowns','parts'].forEach(t=>{
+  ['vehicles','drivers','scan','breakdowns','parts','stats'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
+  if (name === 'stats') renderStatsDashboard();
 }
 function toggleEl(id){ document.getElementById(id).classList.toggle('hidden'); }
 
@@ -1730,6 +1777,82 @@ async function deleteBreakdown(id){
   const { error } = await sb.from('breakdowns').delete().eq('id', id);
   if (error) { alert("Erreur : " + error.message); return; }
   await loadBreakdowns();
+}
+
+/* ---- Tableau de bord statistiques ---- */
+function currentYearMonth(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+function renderStatsDashboard(){
+  const ym = currentYearMonth();
+  const allInterventions = vehicles.flatMap(v => (v.hist||[]).map(h => Object.assign({}, h, { vehicle_id: v.id, plate: v.plate })));
+
+  const pannesTotal = breakdowns.length;
+  const pannesOpen = breakdowns.filter(b => b.status !== 'resolue').length;
+  const pannesMonth = breakdowns.filter(b => b.reported_at && b.reported_at.slice(0,7) === ym).length;
+  const interventionsTotal = allInterventions.length;
+  const costMonth = allInterventions
+    .filter(h => h.date && h.date.slice(0,7) === ym)
+    .reduce((sum,h) => sum + (Number(h.cost)||0), 0);
+
+  document.getElementById('kpi-stats-pannes-total').textContent = pannesTotal;
+  document.getElementById('kpi-stats-pannes-open').textContent = pannesOpen;
+  document.getElementById('kpi-stats-pannes-month').textContent = pannesMonth;
+  document.getElementById('kpi-stats-interventions-total').textContent = interventionsTotal;
+  document.getElementById('kpi-stats-cost-month').textContent = costMonth.toLocaleString('fr-FR');
+
+  // Pannes les plus fréquentes (regroupées par description)
+  const freqMap = {};
+  breakdowns.forEach(b => {
+    const label = (b.description || '(sans description)').trim() || '(sans description)';
+    const key = label.toLowerCase();
+    if (!freqMap[key]) freqMap[key] = { label, count: 0 };
+    freqMap[key].count++;
+  });
+  const freqList = Object.values(freqMap).sort((a,b) => b.count - a.count).slice(0, 6);
+  const freqMax = freqList.length ? freqList[0].count : 1;
+  const freqEl = document.getElementById('stats-frequent-breakdowns');
+  freqEl.innerHTML = freqList.length ? freqList.map(f => `
+    <div class="bar-row">
+      <div class="bar-label" title="${f.label}">${f.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(f.count/freqMax*100)}%;background:var(--yellow);"></div></div>
+      <div class="bar-count">${f.count}</div>
+    </div>`).join('') : '<div class="empty-note">Aucune panne enregistrée.</div>';
+
+  // Véhicules réparés ce mois-ci
+  const monthMap = {};
+  allInterventions.filter(h => h.date && h.date.slice(0,7) === ym).forEach(h => {
+    if (!monthMap[h.vehicle_id]) monthMap[h.vehicle_id] = { plate: h.plate, count: 0, cost: 0, lastDate: h.date };
+    const row = monthMap[h.vehicle_id];
+    row.count++;
+    row.cost += Number(h.cost) || 0;
+    if (h.date > row.lastDate) row.lastDate = h.date;
+  });
+  const monthList = Object.values(monthMap).sort((a,b) => b.count - a.count);
+  const monthEl = document.getElementById('stats-repaired-this-month');
+  monthEl.innerHTML = monthList.length ? `
+    <table class="stats-table">
+      <tr><th>Véhicule</th><th>Interventions</th><th>Dernière intervention</th><th>Coût total</th></tr>
+      ${monthList.map(m => `<tr><td>${m.plate}</td><td>${m.count}</td><td>${m.lastDate}</td><td>${m.cost.toLocaleString('fr-FR')} XAF</td></tr>`).join('')}
+    </table>` : '<div class="empty-note">Aucune réparation ce mois-ci.</div>';
+
+  // Véhicules les plus à risque (le plus de pannes signalées au total)
+  const riskMap = {};
+  breakdowns.forEach(b => {
+    if (!riskMap[b.vehicle_id]) riskMap[b.vehicle_id] = { plate: vehiclePlate(b.vehicle_id), count: 0 };
+    riskMap[b.vehicle_id].count++;
+  });
+  const riskList = Object.values(riskMap).sort((a,b) => b.count - a.count).slice(0, 5);
+  const riskMax = riskList.length ? riskList[0].count : 1;
+  const riskEl = document.getElementById('stats-problem-vehicles');
+  riskEl.innerHTML = riskList.length ? riskList.map(r => `
+    <div class="bar-row">
+      <div class="bar-label" title="${r.plate}">${r.plate}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.count/riskMax*100)}%;background:var(--bad);"></div></div>
+      <div class="bar-count">${r.count}</div>
+    </div>`).join('') : '<div class="empty-note">Aucune panne enregistrée.</div>';
 }
 
 /* ---- Pièces détachées & stock ---- */
