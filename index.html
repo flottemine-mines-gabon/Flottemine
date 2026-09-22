@@ -276,6 +276,7 @@ Minimum version required to store current data is: `+i+`.
   </div>
   <div style="display:flex;gap:8px;align-items:center;">
     <button class="logout hidden" id="install-btn" onclick="installApp()" style="display:inline-flex;align-items:center;gap:6px;color:var(--yellow);border-color:var(--yellow-dim);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Installer l'application</button>
+    <button class="logout hidden" id="biometric-toggle-btn" onclick="toggleBiometricLock()" title="Verrouillage biométrique de l'application sur cet appareil">🔒 Biométrie</button>
     <button class="logout hidden" id="logout-btn" onclick="logout()">Se déconnecter</button>
   </div>
 </header>
@@ -296,10 +297,26 @@ Minimum version required to store current data is: `+i+`.
     <div class="sub" id="auth-sub">Accédez au tableau de bord de votre flotte.</div>
     <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="chef.parc@entreprise.ga"></div>
     <div class="field"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <div class="field hidden" id="biometric-opt-field" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="auth-biometric-opt" style="width:auto;">
+      <label for="auth-biometric-opt" style="margin:0;font-weight:400;cursor:pointer;">🔒 Activer le déverrouillage biométrique (Face ID / empreinte) sur cet appareil</label>
+    </div>
     <button class="btn btn-primary" id="auth-submit" onclick="handleAuth()">Se connecter</button>
     <div id="auth-error"></div>
     <div class="switch-mode" id="switch-mode-text">
       Nouveau client ? <a onclick="toggleAuthMode()">Créer un compte</a>
+    </div>
+  </div>
+
+  <!-- ---- VERROUILLAGE BIOMÉTRIQUE ---- -->
+  <div id="biometric-lock-screen" class="hidden" style="max-width:380px;margin:60px auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px;text-align:center;">
+    <div style="font-size:38px;margin-bottom:6px;">🔒</div>
+    <h2 style="margin:0 0 4px;">Application verrouillée</h2>
+    <div class="sub" style="font-family:'IBM Plex Sans';">Déverrouillez avec Face ID, empreinte digitale ou Windows Hello pour continuer.</div>
+    <button class="btn btn-primary" id="biometric-unlock-btn" onclick="attemptBiometricUnlock()" style="width:100%;margin-top:16px;">Déverrouiller</button>
+    <div id="biometric-error" style="color:#c0392b;font-size:13px;margin-top:10px;"></div>
+    <div class="switch-mode" style="margin-top:16px;">
+      <a onclick="fallbackToPassword()">Utiliser mon mot de passe à la place</a>
     </div>
   </div>
 
@@ -632,6 +649,7 @@ let authMode = 'login'; // 'login' | 'signup'
 let vehicles = [];
 let selectedId = null;
 let currentUser = null;
+let pendingLoginCtx = null;
 
 /* ---- Hors ligne ---- */
 if ('serviceWorker' in navigator) {
@@ -717,17 +735,129 @@ async function handleAuth(){
     errorEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer, puis connecte-toi.";
     return;
   }
+  const wantsBiometric = document.getElementById('auth-biometric-opt').checked;
+  if (wantsBiometric && result.data.user) {
+    try {
+      await registerBiometric(result.data.user.id, email);
+      sessionStorage.setItem('fm-biometric-unlocked', '1');
+    } catch(e) {
+      errorEl.style.color = '#c0392b';
+      errorEl.textContent = "Connexion réussie, mais l'activation de la biométrie a échoué : " + (e.message || e);
+    }
+  }
   await onLoggedIn(result.data.user);
+}
+
+/* ---- Verrouillage biométrique (WebAuthn : Face ID / empreinte / Windows Hello) ----
+   Ceci verrouille l'accès à l'application SUR CET APPAREIL en s'appuyant sur le
+   capteur biométrique du système d'exploitation ; la session Supabase reste celle
+   authentifiée par email/mot de passe. Ça protège un téléphone/ordinateur resté
+   connecté (session persistée dans localStorage) contre un accès non autorisé,
+   mais ce n'est pas un facteur d'authentification vérifié par le serveur. */
+async function biometricAvailable(){
+  try {
+    return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  } catch(e) { return false; }
+}
+
+async function registerBiometric(userId, email){
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const cred = await navigator.credentials.create({
+    publicKey: {
+      challenge,
+      rp: { name: 'FlotteMine' },
+      user: { id: new TextEncoder().encode(userId), name: email, displayName: email },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+      timeout: 60000,
+      attestation: 'none'
+    }
+  });
+  const credId = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+  localStorage.setItem('fm-biometric-cred-' + userId, credId);
+  localStorage.setItem('fm-biometric-enabled-' + userId, '1');
+}
+
+async function verifyBiometric(userId){
+  const credId = localStorage.getItem('fm-biometric-cred-' + userId);
+  if (!credId) return false;
+  const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: rawId, type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    return !!assertion;
+  } catch(e) { return false; }
+}
+
+async function attemptBiometricUnlock(){
+  const errorEl = document.getElementById('biometric-error');
+  const btn = document.getElementById('biometric-unlock-btn');
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Vérification…';
+  const ok = await verifyBiometric(pendingLoginCtx.user.id);
+  btn.disabled = false;
+  btn.textContent = 'Déverrouiller';
+  if (!ok) { errorEl.textContent = "Échec de la vérification biométrique. Réessayez."; return; }
+  sessionStorage.setItem('fm-biometric-unlocked', '1');
+  document.getElementById('biometric-lock-screen').classList.add('hidden');
+  const ctx = pendingLoginCtx;
+  pendingLoginCtx = null;
+  await revealDashboard(ctx.user, ctx.opts);
+}
+
+function fallbackToPassword(){
+  document.getElementById('biometric-lock-screen').classList.add('hidden');
+  pendingLoginCtx = null;
+  logout();
+}
+
+async function toggleBiometricLock(){
+  if (!currentUser) return;
+  const enabled = localStorage.getItem('fm-biometric-enabled-' + currentUser.id) === '1';
+  if (enabled) {
+    if (!confirm("Désactiver le déverrouillage biométrique sur cet appareil ?")) return;
+    localStorage.removeItem('fm-biometric-enabled-' + currentUser.id);
+    localStorage.removeItem('fm-biometric-cred-' + currentUser.id);
+    updateBiometricToggleBtn();
+    return;
+  }
+  try {
+    await registerBiometric(currentUser.id, currentUser.email);
+    sessionStorage.setItem('fm-biometric-unlocked', '1');
+    updateBiometricToggleBtn();
+    alert("Déverrouillage biométrique activé sur cet appareil.");
+  } catch(e) {
+    alert("Impossible d'activer la biométrie : " + (e.message || e));
+  }
+}
+
+function updateBiometricToggleBtn(){
+  const btn = document.getElementById('biometric-toggle-btn');
+  if (!btn || !currentUser) return;
+  const enabled = localStorage.getItem('fm-biometric-enabled-' + currentUser.id) === '1';
+  btn.textContent = enabled ? '🔓 Désactiver la biométrie' : '🔒 Activer la biométrie';
 }
 
 async function logout(){
   await sb.auth.signOut();
   currentUser = null;
+  pendingLoginCtx = null;
   try { localStorage.removeItem('fm-cached-user'); } catch(e) {}
+  try { sessionStorage.removeItem('fm-biometric-unlocked'); } catch(e) {}
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('locked-screen').classList.add('hidden');
+  document.getElementById('biometric-lock-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('logout-btn').classList.add('hidden');
+  document.getElementById('biometric-toggle-btn').classList.add('hidden');
 }
 
 async function onLoggedIn(user, opts){
@@ -736,11 +866,33 @@ async function onLoggedIn(user, opts){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('logout-btn').classList.remove('hidden');
 
+  // Le bouton "Activer/Désactiver la biométrie" reste caché tant que l'appli
+  // est verrouillée : sinon on pourrait désactiver la protection sans jamais
+  // avoir réussi la vérification biométrique elle-même.
+  const canBiometric = await biometricAvailable();
+  const biometricEnabled = localStorage.getItem('fm-biometric-enabled-' + user.id) === '1';
+  const alreadyUnlocked = sessionStorage.getItem('fm-biometric-unlocked') === '1';
+  if (biometricEnabled && !alreadyUnlocked && canBiometric) {
+    pendingLoginCtx = { user, opts };
+    document.getElementById('biometric-error').textContent = '';
+    document.getElementById('biometric-lock-screen').classList.remove('hidden');
+    return;
+  }
+
+  await revealDashboard(user, opts);
+}
+
+async function revealDashboard(user, opts){
   const allowed = (opts && opts.offline) ? true : await checkSubscription();
   if (!allowed) {
     document.getElementById('locked-screen').classList.remove('hidden');
     return;
   }
+
+  const biometricBtn = document.getElementById('biometric-toggle-btn');
+  const canBiometric = await biometricAvailable();
+  biometricBtn.classList.toggle('hidden', !canBiometric);
+  if (canBiometric) updateBiometricToggleBtn();
 
   document.getElementById('dashboard').classList.remove('hidden');
   await loadVehicles();
@@ -2547,6 +2699,9 @@ async function confirmImport(){
 /* ---- Boot ---- */
 (async function boot(){
   updateOfflineBanner();
+  biometricAvailable().then(avail => {
+    document.getElementById('biometric-opt-field').classList.toggle('hidden', !avail);
+  });
   if (!configured) return;
 
   // getSession() lit la session depuis le stockage local : ça fonctionne hors
