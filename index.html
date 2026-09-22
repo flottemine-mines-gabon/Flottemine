@@ -569,6 +569,7 @@ Minimum version required to store current data is: `+i+`.
    ========================================================== */
 const SUPABASE_URL = "https://pgoesbhdbmnjscmvsflv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
+const APP_BASE_URL = "https://flottemine-mines-gabon.github.io/Flottemine/";
 
 let sb = null;
 let configured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
@@ -879,7 +880,7 @@ function renderDetail(){
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Supprimer ce véhicule</button>
   `;
   populateCategorySelects(v.category);
-  renderQrToCanvas(document.getElementById(`qr-vehicle-${v.id}`), JSON.stringify({ type: 'vehicle', plate: v.plate, fleet_number: fleetCode(v) }));
+  renderQrToCanvas(document.getElementById(`qr-vehicle-${v.id}`), `${APP_BASE_URL}voir-badge.html?type=vehicle&code=${encodeURIComponent(v.plate)}`);
 }
 
 /* ---- Codes internes & QR codes ---- */
@@ -1265,9 +1266,7 @@ async function renderDriverDetail(){
   populateVehicleSelects();
   const edSel = document.getElementById(`ed-vehicle-${d.id}`);
   if (edSel) edSel.value = d.vehicle_id || '';
-  renderQrToCanvas(document.getElementById(`qr-driver-${d.id}`), JSON.stringify({
-    type: 'driver', matricule: d.matricule || driverCode(d), full_name: d.full_name
-  }));
+  renderQrToCanvas(document.getElementById(`qr-driver-${d.id}`), `${APP_BASE_URL}voir-badge.html?type=driver&code=${encodeURIComponent(d.matricule || driverCode(d))}`);
 }
 
 function openStatusForm(id, status){
@@ -1569,10 +1568,17 @@ function scanLoop(){
 }
 
 function handleScanResult(text){
+  // Ancien format (badges déjà imprimés avant la version "URL publique") : JSON brut.
   let parsed = null;
   try { parsed = JSON.parse(text); } catch(e) {}
   if (parsed && parsed.type === 'vehicle' && parsed.plate) { manualLookupText(parsed.plate); return; }
   if (parsed && parsed.type === 'driver' && parsed.matricule) { manualLookupText(parsed.matricule); return; }
+  // Nouveau format : une URL vers voir-badge.html?type=...&code=...
+  try {
+    const url = new URL(text);
+    const code = url.searchParams.get('code');
+    if (code) { manualLookupText(code); return; }
+  } catch(e) {}
   manualLookupText(text);
 }
 

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Badge — FlotteMine</title>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0F2A1C">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#0F2A1C; --surface:#173A26; --surface-2:#1F4A30;
+    --ink:#F5F3EA; --ink-soft:#A3C7AE; --line:#2E6242;
+    --yellow:#FFB800; --ok:#4CAF7D; --warn:#FFB800; --bad:#E5573F; --info:#5B93F5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  h1,h2{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-0.01em;}
+  .mono{font-family:'IBM Plex Mono','IBM Plex Sans',monospace;}
+  header{background:var(--surface);padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:17px;}
+  .brand-mark{width:28px;height:28px;border-radius:6px;background:var(--yellow);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  main{max-width:460px;margin:0 auto;padding:24px 16px 60px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+  .top h1{margin:0;font-size:20px;}
+  .sub{color:var(--ink-soft);font-size:13px;margin-bottom:14px;}
+  .status{font-family:'IBM Plex Sans';font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:5px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  .status.ok{background:rgba(76,175,125,.15);color:var(--ok);}
+  .status.warn{background:rgba(245,179,1,.15);color:var(--warn);}
+  .status.bad{background:rgba(229,87,63,.15);color:var(--bad);}
+  .status.info{background:rgba(91,147,245,.15);color:var(--info);}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .row:last-child{border-bottom:none;}
+  .row .k{color:var(--ink-soft);flex-shrink:0;}
+  .row .v{font-weight:600;text-align:right;color:var(--ink);}
+  .state{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:14px;}
+  .state svg{color:var(--ink-soft);margin-bottom:10px;}
+  .footer-link{display:block;text-align:center;margin-top:22px;color:var(--ink-soft);font-size:12.5px;text-decoration:none;border:1px solid var(--line);padding:10px 14px;border-radius:6px;}
+  .footer-link:hover{border-color:var(--yellow);color:var(--ink);}
+  @media (max-width:480px){ main{padding:18px 12px 50px;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2C7 2 3 6 3 11c0 6.5 9 11 9 11s9-4.5 9-11c0-5-4-9-9-9z" fill="#D6A24C"/><circle cx="12" cy="10.5" r="3.6" fill="#0F2A1C"/></svg>
+    </div>
+    FlotteMine
+  </div>
+</header>
+
+<main>
+  <div id="content">
+    <div class="state">Chargement du badge…</div>
+  </div>
+  <a class="footer-link" href="index.html">Ouvrir l'application FlotteMine →</a>
+</main>
+
+<script>
+const SUPABASE_URL = "https://pgoesbhdbmnjscmvsflv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
+
+const DRIVER_STATUS_META = {
+  sur_site:  { label: 'Sur site',              badge: 'ok'   },
+  repos:     { label: 'En repos',              badge: 'info' },
+  libreville:{ label: 'À Libreville',          badge: 'info' },
+  conge:     { label: 'En congé',              badge: 'info' },
+  absent:    { label: 'Absent / indisponible', badge: 'warn' }
+};
+const LIBREVILLE_REST_DAYS = 7;
+const LIBREVILLE_CYCLE_DAYS = 14;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function daysSince(dateStr){
+  if (!dateStr) return 0;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+function librevilleInfo(status_since){
+  const elapsed = daysSince(status_since);
+  const phase = elapsed < LIBREVILLE_REST_DAYS ? 'repos' : 'astreinte';
+  return {
+    phase,
+    label: phase === 'repos' ? 'Semaine de repos' : "Semaine d'astreinte",
+    daysRemainingInPhase: phase === 'repos' ? (LIBREVILLE_REST_DAYS - elapsed) : (LIBREVILLE_CYCLE_DAYS - elapsed),
+    overdue: elapsed > LIBREVILLE_CYCLE_DAYS ? elapsed - LIBREVILLE_CYCLE_DAYS : 0
+  };
+}
+function computeVehicleStatus(v){
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  if (remaining <= 0) return 'bad';
+  if (remaining <= 1000) return 'warn';
+  return 'ok';
+}
+function statusLabel(s){ return s==='ok' ? 'OK' : s==='warn' ? 'À surveiller' : 'Urgent'; }
+
+function notFoundState(kind){
+  return `<div class="state">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>${kind === 'driver' ? 'Chauffeur' : kind === 'vehicle' ? 'Véhicule' : 'Badge'} introuvable.</div>
+  </div>`;
+}
+
+function renderDriver(d){
+  const meta = DRIVER_STATUS_META[d.status] || DRIVER_STATUS_META.sur_site;
+  let phaseRows = '';
+  if (d.status === 'sur_site') {
+    const remaining = (d.rotation_days || 14) - daysSince(d.status_since);
+    phaseRows = `
+      <div class="row"><span class="k">Durée de rotation</span><span class="v">${d.rotation_days || 14} jours</span></div>
+      <div class="row"><span class="k">Jours restants avant sortie</span><span class="v">${remaining < 0 ? `Dépassé de ${Math.abs(remaining)} j` : `${remaining} j`}</span></div>`;
+  } else if (d.status === 'libreville') {
+    const info = librevilleInfo(d.status_since);
+    phaseRows = `
+      <div class="row"><span class="k">Phase actuelle</span><span class="v">${info.label}</span></div>
+      <div class="row"><span class="k">Jours restants dans cette phase</span><span class="v">${info.overdue > 0 ? `Séjour dépassé de ${info.overdue} j` : `${info.daysRemainingInPhase} j`}</span></div>`;
+  }
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="top">
+        <h1>${esc(d.full_name)}</h1>
+        <span class="status ${meta.badge}">${esc(meta.label)}</span>
+      </div>
+      <div class="sub mono">${esc(d.matricule || '')}</div>
+
+      <div class="row"><span class="k">Statut</span><span class="v">${esc(meta.label)}</span></div>
+      <div class="row"><span class="k">Depuis le</span><span class="v">${esc(d.status_since || '—')} (${daysSince(d.status_since)} j)</span></div>
+      ${phaseRows}
+      <div class="row"><span class="k">Site / localisation</span><span class="v">${esc(d.site || '—')}</span></div>
+      <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${esc(d.phone)}" style="color:var(--ink);">${esc(d.phone)}</a>` : '—'}</span></div>
+      <div class="row"><span class="k">Véhicule assigné</span><span class="v">${d.vehicle_plate ? esc(d.vehicle_plate) + (d.vehicle_model ? ' — ' + esc(d.vehicle_model) : '') : 'Aucun'}</span></div>
+      <div class="row"><span class="k">N° de permis</span><span class="v">${esc(d.license_number || '—')}</span></div>
+      <div class="row"><span class="k">Expiration permis</span><span class="v">${esc(d.license_expiry || '—')}</span></div>
+    </div>`;
+}
+
+function renderVehicle(v){
+  const s = computeVehicleStatus(v);
+  const remaining = v.service_interval_km - (v.km - v.last_service_km);
+  const nextText = remaining <= 0
+    ? `Vidange dépassée de ${Math.abs(remaining).toLocaleString('fr-FR')} km`
+    : `Vidange dans ${remaining.toLocaleString('fr-FR')} km`;
+  const availability = v.availability === 'en_maintenance' ? 'En maintenance'
+    : s === 'bad' ? 'Indisponible (vidange dépassée)' : 'Disponible';
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="top">
+        <h1>${esc(v.plate)}</h1>
+        <span class="status ${s}">${esc(statusLabel(s))}</span>
+      </div>
+      <div class="sub mono">${v.fleet_number ? 'VH-' + String(v.fleet_number).padStart(4,'0') : ''}</div>
+
+      <div class="row"><span class="k">Modèle</span><span class="v">${esc(v.model || '—')}</span></div>
+      <div class="row"><span class="k">Catégorie</span><span class="v">${esc(v.category || 'Véhicule léger')}</span></div>
+      <div class="row"><span class="k">Kilométrage</span><span class="v">${Number(v.km||0).toLocaleString('fr-FR')} km</span></div>
+      <div class="row"><span class="k">Prochaine échéance</span><span class="v">${esc(nextText)}</span></div>
+      <div class="row"><span class="k">Disponibilité</span><span class="v">${esc(availability)}</span></div>
+      ${v.maintenance_until ? `<div class="row"><span class="k">Sortie prévue</span><span class="v">${esc(v.maintenance_until)}</span></div>` : ''}
+    </div>`;
+}
+
+async function main(){
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get('type');
+  const code = params.get('code');
+  if (!code || (type !== 'driver' && type !== 'vehicle')) {
+    document.getElementById('content').innerHTML = notFoundState(type);
+    return;
+  }
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    document.getElementById('content').innerHTML = `<div class="state">Impossible de charger les données (pas de connexion internet).</div>`;
+    return;
+  }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  try {
+    if (type === 'driver') {
+      const { data, error } = await sb.rpc('get_driver_badge', { p_matricule: code });
+      if (error || !data || !data.length) { document.getElementById('content').innerHTML = notFoundState('driver'); return; }
+      renderDriver(data[0]);
+    } else {
+      const { data, error } = await sb.rpc('get_vehicle_badge', { p_plate: code });
+      if (error || !data || !data.length) { document.getElementById('content').innerHTML = notFoundState('vehicle'); return; }
+      renderVehicle(data[0]);
+    }
+  } catch(e) {
+    document.getElementById('content').innerHTML = `<div class="state">Erreur de connexion. Réessayez.</div>`;
+  }
+}
+main();
+</script>
+</body>
+</html>
