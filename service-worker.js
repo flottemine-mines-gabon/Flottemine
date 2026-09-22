@@ -3,13 +3,14 @@
    pour qu'elle continue à s'afficher hors ligne. Les données (véhicules,
    chauffeurs...) restent gérées séparément par l'app via localStorage. */
 
-const CACHE_NAME = 'flottemine-shell-v3';
+const CACHE_NAME = 'flottemine-shell-v4';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './icons/icon-512-maskable.png'
 ];
 // Bibliothèques externes (CDN) dont l'app a besoin dès le chargement.
 // Mises en cache à part (requêtes cross-origin "no-cors" → réponses
