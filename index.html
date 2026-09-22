@@ -671,7 +671,7 @@ function computeStatus(v){
   if (remaining <= 1000) return 'warn';
   return 'ok';
 }
-function statusLabel(s){ return s==='ok' ? 'OK' : s==='warn' ? 'À surveiller' : 'Véhicule indisponible'; }
+function statusLabel(s){ return s==='ok' ? 'OK' : s==='warn' ? 'À surveiller' : 'Urgent'; }
 function vehicleAvailabilityLabel(v){
   if (v.availability === 'en_maintenance') return 'En maintenance';
   if (computeStatus(v) === 'bad') return 'Indisponible (vidange dépassée)';
