@@ -116,6 +116,25 @@ Minimum version required to store current data is: `+i+`.
   .stats-table th{text-align:left;font-size:11.5px;font-weight:600;color:var(--ink-soft);padding:6px 10px;border-bottom:1px solid var(--line);}
   .stats-table td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
   .stats-table tr:last-child td{border-bottom:none;}
+  .status.orange{background:rgba(232,121,30,.15);color:#E8791E;}
+
+  .mp-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+  .mp-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);}
+  .mp-summary div{background:var(--surface-2);padding:12px 14px;}
+  .mp-summary b{display:block;font-family:'Space Grotesk';font-size:19px;}
+  .mp-summary span{display:block;font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .mp-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:11px;color:var(--ink-soft);}
+  .mp-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .mp-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0;}
+  .mp-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Sans';}
+  .mp-table th{text-align:left;font-size:10.5px;font-weight:600;color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .mp-table td{font-size:12px;padding:7px 10px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top;}
+  .mp-table tr:last-child td{border-bottom:none;}
+  .mp-date{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-soft);white-space:nowrap;}
+  .mp-date-sep td{background:var(--surface-2);font-weight:600;color:var(--ink);border-bottom:1px solid var(--line);padding:5px 10px;font-size:11px;}
+  .mp-plate{font-family:'IBM Plex Mono';font-weight:600;white-space:nowrap;}
+  .mp-status-pill{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10.5px;font-weight:600;white-space:nowrap;}
+  .mp-notes{max-width:260px;color:var(--ink-soft);}
 
   .grid-body{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
   @media (max-width:820px){ .grid-body{grid-template-columns:1fr;} }
@@ -545,6 +564,12 @@ Minimum version required to store current data is: `+i+`.
         <div class="kpi"><b id="kpi-stats-interventions-total">0</b><span>réparations effectuées</span></div>
         <div class="kpi"><b id="kpi-stats-cost-month">0</b><span>XAF dépensés ce mois-ci</span></div>
       </div>
+
+      <div class="panel-title">
+        <h2><span class="section-icon acc-stats"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg></span>Plan de maintenance hebdomadaire</h2>
+        <button class="btn btn-secondary" onclick="exportMaintenancePlanCSV()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exporter le plan (CSV)</button>
+      </div>
+      <div id="maintenance-plan"><div class="empty-note">Aucun véhicule pour l'instant.</div></div>
 
       <div class="panel-title">
         <h2><span class="section-icon acc-stats"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>Pannes les plus fréquentes</h2>
@@ -1956,7 +1981,149 @@ function currentYearMonth(){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
 
+// Plan de maintenance : pour chaque véhicule (hors ceux déjà en maintenance),
+// estime une échéance en se basant sur le rythme d'utilisation observé entre
+// la dernière intervention connue et aujourd'hui (km parcourus / jours écoulés).
+const MP_WEEKDAYS = ['dim','lun','mar','mer','jeu','ven','sam'];
+const MP_SPAN_DAYS = 6;
+const MP_PROCHE_KM = 2000;
+
+function mpFormatDate(d){
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+// Plan de maintenance hebdomadaire : reprend tous les véhicules actifs (hors
+// ceux déjà en maintenance), détermine pour chacun un statut (vidange
+// dépassée, panne à traiter, vidange proche, données à vérifier, ou
+// planifié) et répartit le tout sur les prochains jours, du plus urgent au
+// moins urgent.
+function computeMaintenancePlan(){
+  const items = vehicles
+    .filter(v => v.availability !== 'en_maintenance')
+    .map(v => {
+      const remaining = v.service_interval_km - (v.km - v.last_service_km);
+      const nextService = v.last_service_km + v.service_interval_km;
+      const driver = drivers.find(d => d.vehicle_id === v.id);
+      const openBreakdowns = breakdowns.filter(b => b.vehicle_id === v.id && b.status !== 'resolue');
+      const hasUrgentBreakdown = openBreakdowns.some(b => b.priority === 'urgente');
+      const dataInconsistent = !v.service_interval_km || v.service_interval_km <= 0 || v.last_service_km == null;
+
+      let level, statusLabel, rank;
+      if (!dataInconsistent && remaining <= 0) {
+        level = 'bad'; statusLabel = `DÉPASSÉE de ${Math.abs(remaining).toLocaleString('fr-FR')} km`; rank = 0;
+      } else if (openBreakdowns.length) {
+        level = 'orange';
+        statusLabel = (hasUrgentBreakdown ? 'PANNE PRIORITAIRE — ' : 'PANNE — ') + openBreakdowns[0].description;
+        rank = hasUrgentBreakdown ? 1 : 2;
+      } else if (!dataInconsistent && remaining <= MP_PROCHE_KM) {
+        level = 'warn'; statusLabel = `PROCHE — reste ${remaining.toLocaleString('fr-FR')} km`; rank = 3;
+      } else if (dataInconsistent) {
+        level = 'info'; statusLabel = 'À VÉRIFIER — échéance inconnue'; rank = 4;
+      } else {
+        level = 'ok'; statusLabel = `Planifié — reste ${remaining.toLocaleString('fr-FR')} km`; rank = 5;
+      }
+
+      const notesParts = [];
+      if (level === 'bad') notesParts.push('Vidange immédiate.');
+      else if (level === 'warn') notesParts.push('Préparer la vidange.');
+      if (openBreakdowns.length) notesParts.push(openBreakdowns.map(b => b.description).join(' ; ') + '.');
+      if (!notesParts.length) notesParts.push('Contrôle de routine.');
+
+      return {
+        plate: v.plate, driverName: driver ? driver.full_name : '—', km: v.km,
+        nextService, remaining, level, statusLabel, notes: notesParts.join(' '),
+        rank, sortKey: level === 'bad' ? remaining : (level === 'orange' ? 0 : remaining),
+        openBreakdownsCount: openBreakdowns.length,
+      };
+    })
+    .sort((a,b) => a.rank - b.rank || a.sortKey - b.sortKey);
+
+  const perDay = Math.max(1, Math.ceil(items.length / MP_SPAN_DAYS));
+  const start = new Date(); start.setDate(start.getDate() + 1); start.setHours(0,0,0,0);
+  items.forEach((it, i) => {
+    const dayIndex = Math.min(MP_SPAN_DAYS - 1, Math.floor(i / perDay));
+    const d = new Date(start); d.setDate(d.getDate() + dayIndex);
+    it.date = d; it.dateLabel = `${MP_WEEKDAYS[d.getDay()]} ${mpFormatDate(d)}`; it.dateKey = mpFormatDate(d);
+  });
+  return { items, start, end: new Date(start.getTime() + (MP_SPAN_DAYS-1)*86400000) };
+}
+
+function renderMaintenancePlan(){
+  const { items, start, end } = computeMaintenancePlan();
+  const el = document.getElementById('maintenance-plan');
+  if (!items.length) { el.innerHTML = '<div class="empty-note">Aucun véhicule pour l\'instant.</div>'; return; }
+
+  const overdueCount = items.filter(it => it.level === 'bad').length;
+  const breakdownCount = items.reduce((s,it) => s + it.openBreakdownsCount, 0);
+  const sameMonth = start.getMonth() === end.getMonth();
+  const periode = sameMonth
+    ? `${String(start.getDate()).padStart(2,'0')} au ${mpFormatDate(end)}`
+    : `${mpFormatDate(start)} au ${mpFormatDate(end)}`;
+
+  let rows = '';
+  let lastDateKey = null;
+  items.forEach(it => {
+    if (it.dateKey !== lastDateKey) {
+      rows += `<tr class="mp-date-sep"><td colspan="7">${it.dateLabel}</td></tr>`;
+      lastDateKey = it.dateKey;
+    }
+    rows += `<tr>
+      <td class="mp-date">${it.dateLabel}</td>
+      <td>${it.driverName}</td>
+      <td class="mp-plate">${it.plate}</td>
+      <td>${it.km.toLocaleString('fr-FR')}</td>
+      <td>${it.nextService.toLocaleString('fr-FR')}</td>
+      <td>${it.remaining < 0 ? '−' : ''}${Math.abs(it.remaining).toLocaleString('fr-FR')}</td>
+      <td><span class="mp-status-pill status ${it.level}">${it.statusLabel}</span></td>
+      <td class="mp-notes">${it.notes}</td>
+    </tr>`;
+  });
+
+  el.innerHTML = `
+    <div class="mp-wrap">
+      <div class="mp-summary">
+        <div><b>${items.length}</b><span>véhicules</span></div>
+        <div><b>${MP_SPAN_DAYS}</b><span>jours</span></div>
+        <div><b>${overdueCount}</b><span>vidanges dépassées</span></div>
+        <div><b>${breakdownCount}</b><span>pannes en cours</span></div>
+      </div>
+      <div class="mp-legend">
+        <span><i style="background:var(--bad);"></i>Urgent / dépassé</span>
+        <span><i style="background:#E8791E;"></i>Panne à traiter</span>
+        <span><i style="background:var(--warn);"></i>Vidange proche</span>
+        <span><i style="background:var(--info);"></i>À vérifier</span>
+        <span><i style="background:var(--ok);"></i>Planifié</span>
+        <span style="margin-left:auto;">Période : ${periode}</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mp-table">
+          <tr><th>Date</th><th>Chauffeur</th><th>Immatriculation</th><th>Km actuel</th><th>Prochaine vidange</th><th>Écart (km)</th><th>Statut</th><th>Pannes / interventions</th></tr>
+          ${rows}
+        </table>
+      </div>
+    </div>`;
+}
+
+function exportMaintenancePlanCSV(){
+  const { items } = computeMaintenancePlan();
+  const header = ['Date','Chauffeur','Immatriculation','Kilométrage actuel','Prochaine vidange','Écart vidange (km)','Statut','Pannes / interventions'];
+  const rows = items.map(it => [
+    it.dateLabel, it.driverName, it.plate, it.km, it.nextService, it.remaining, it.statusLabel, it.notes
+  ]);
+  const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flottemine-plan-maintenance-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function renderStatsDashboard(){
+  renderMaintenancePlan();
   const ym = currentYearMonth();
   const allInterventions = vehicles.flatMap(v => (v.hist||[]).map(h => Object.assign({}, h, { vehicle_id: v.id, plate: v.plate })));
 
