@@ -1,0 +1,16 @@
+{
+  "name": "FlotteMine — Suivi de flotte",
+  "short_name": "FlotteMine",
+  "description": "Suivi de véhicules et de chauffeurs pour sous-traitants miniers",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0D1210",
+  "theme_color": "#0D1210",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
