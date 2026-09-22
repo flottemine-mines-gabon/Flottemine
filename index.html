@@ -165,6 +165,7 @@ Minimum version required to store current data is: `+i+`.
   .alerts-panel{margin-bottom:18px;}
   .alerts-panel .alert-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;font-family:'IBM Plex Sans';}
   .alerts-panel .alert-row.warn{border-left-color:var(--warn);}
+  .alerts-panel .alert-row.info{border-left-color:var(--info);}
   .alerts-panel .alert-row:hover{background:var(--surface-hover);}
   .alerts-panel .alert-row b{font-family:'Space Grotesk';font-weight:600;}
 
@@ -176,6 +177,7 @@ Minimum version required to store current data is: `+i+`.
   .countdown-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-soft);}
   .countdown-chip.warn{background:rgba(245,179,1,.15);color:var(--warn);}
   .countdown-chip.bad{background:rgba(229,87,63,.15);color:var(--bad);}
+  .countdown-chip.info{background:rgba(91,147,245,.15);color:var(--info);}
 
   /* ---- QR codes ---- */
   .qr-block{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:16px;margin:14px 0;}
@@ -878,12 +880,38 @@ function daysRemainingOnSite(d){
 }
 const SITE_EXIT_WARN_DAYS = 7;
 
+// À Libreville, les 2 semaines se découpent en une semaine de repos
+// puis une semaine d'astreinte de travail.
+const LIBREVILLE_REST_DAYS = 7;
+const LIBREVILLE_CYCLE_DAYS = 14;
+
+function librevilleInfo(d){
+  if (d.status !== 'libreville') return null;
+  const elapsed = daysSince(d.status_since);
+  const phase = elapsed < LIBREVILLE_REST_DAYS ? 'repos' : 'astreinte';
+  return {
+    phase,
+    label: phase === 'repos' ? 'Semaine de repos' : "Semaine d'astreinte",
+    daysRemainingInPhase: phase === 'repos' ? (LIBREVILLE_REST_DAYS - elapsed) : (LIBREVILLE_CYCLE_DAYS - elapsed),
+    daysRemainingInCycle: LIBREVILLE_CYCLE_DAYS - elapsed,
+    overdue: elapsed > LIBREVILLE_CYCLE_DAYS ? elapsed - LIBREVILLE_CYCLE_DAYS : 0
+  };
+}
+
 function countdownChipHtml(d){
-  const remaining = daysRemainingOnSite(d);
-  if (remaining === null) return '';
-  const cls = remaining < 0 ? 'bad' : remaining <= SITE_EXIT_WARN_DAYS ? 'warn' : '';
-  const text = remaining < 0 ? `Sortie J+${Math.abs(remaining)}` : `Sortie J-${remaining}`;
-  return ` · <span class="countdown-chip ${cls}">${text}</span>`;
+  if (d.status === 'sur_site') {
+    const remaining = daysRemainingOnSite(d);
+    const cls = remaining < 0 ? 'bad' : remaining <= SITE_EXIT_WARN_DAYS ? 'warn' : '';
+    const text = remaining < 0 ? `Sortie J+${Math.abs(remaining)}` : `Sortie J-${remaining}`;
+    return ` · <span class="countdown-chip ${cls}">${text}</span>`;
+  }
+  if (d.status === 'libreville') {
+    const info = librevilleInfo(d);
+    if (info.overdue > 0) return ` · <span class="countdown-chip bad">Séjour J+${info.overdue}</span>`;
+    if (info.phase === 'repos') return ` · <span class="countdown-chip">Repos J-${info.daysRemainingInPhase}</span>`;
+    return ` · <span class="countdown-chip info">Astreinte · J-${info.daysRemainingInPhase}</span>`;
+  }
+  return '';
 }
 
 function computeDriverAlerts(d){
@@ -898,6 +926,10 @@ function computeDriverAlerts(d){
     if (remaining < 0) alerts.push({ level:'bad', text:`Rotation dépassée de ${Math.abs(remaining)} jour(s) — sortie en retard.` });
     else if (remaining <= SITE_EXIT_WARN_DAYS) alerts.push({ level:'warn', text:`Sortie de site prévue dans ${remaining} jour(s).` });
   }
+  if (d.status === 'libreville') {
+    const info = librevilleInfo(d);
+    if (info.overdue > 0) alerts.push({ level:'bad', text:`Séjour à Libreville dépassé de ${info.overdue} jour(s) — vérifier le retour sur site.` });
+  }
   if (d.status === 'absent') {
     alerts.push({ level:'bad', text:`Statut "Absent / indisponible" — à clarifier.` });
   }
@@ -908,6 +940,19 @@ function computeDriverAlerts(d){
   }
   return alerts;
 }
+
+// Notices : informations utiles mais non urgentes (pas comptées comme "alertes").
+function computeDriverNotices(d){
+  const notices = [];
+  if (d.status === 'libreville') {
+    const info = librevilleInfo(d);
+    if (info.overdue === 0 && info.phase === 'astreinte') {
+      notices.push({ level:'info', text:`Semaine de repos terminée — disponible pour l'astreinte (${info.daysRemainingInPhase} j avant la fin du séjour).` });
+    }
+  }
+  return notices;
+}
+
 function driverAlertLevel(alerts){
   if (alerts.some(a=>a.level==='bad')) return 'bad';
   if (alerts.some(a=>a.level==='warn')) return 'warn';
@@ -923,17 +968,20 @@ function renderDriverKpis(){
   document.getElementById('kpi-drv-alerts').textContent = drivers.filter(d=>driverAlertLevel(computeDriverAlerts(d))).length;
 }
 
+const ALERT_LEVEL_RANK = { bad: 0, warn: 1, info: 2 };
+
 function renderDriverAlerts(){
   const el = document.getElementById('driver-alerts');
-  const withAlerts = drivers
-    .map(d => ({ d, alerts: computeDriverAlerts(d) }))
-    .filter(x => x.alerts.length)
-    .sort((a,b) => (driverAlertLevel(a.alerts)==='bad'?0:1) - (driverAlertLevel(b.alerts)==='bad'?0:1));
-  if (!withAlerts.length){ el.innerHTML = ''; return; }
-  el.innerHTML = withAlerts.map(({d,alerts}) => {
-    const lvl = driverAlertLevel(alerts);
+  const rows = drivers
+    .map(d => ({ d, items: [...computeDriverAlerts(d), ...computeDriverNotices(d)] }))
+    .filter(x => x.items.length)
+    .map(x => ({ ...x, lvl: x.items.some(a=>a.level==='bad') ? 'bad' : x.items.some(a=>a.level==='warn') ? 'warn' : 'info' }))
+    .sort((a,b) => ALERT_LEVEL_RANK[a.lvl] - ALERT_LEVEL_RANK[b.lvl]);
+  if (!rows.length){ el.innerHTML = ''; return; }
+  el.innerHTML = rows.map(({d,items,lvl}) => {
+    const icon = lvl === 'info' ? 'ℹ️' : '⚠';
     return `<div class="alert-row ${lvl}" onclick="selectDriver('${d.id}')">
-      <span><b>${d.full_name}</b> — ${alerts.map(a=>a.text).join(' · ')}</span>
+      <span><b>${d.full_name}</b> — ${icon} ${items.map(a=>a.text).join(' · ')}</span>
       <span class="status ${driverStatusBadge(d.status)}">${driverStatusLabel(d.status)}</span>
     </div>`;
   }).join('');
@@ -1040,6 +1088,11 @@ async function renderDriverDetail(){
     <div class="row"><span class="k">Depuis le</span><span class="v">${d.status_since || '—'} (${daysSince(d.status_since)} j)</span></div>
     ${d.status === 'sur_site' ? `<div class="row"><span class="k">Durée de rotation</span><span class="v">${d.rotation_days||14} jours</span></div>
     <div class="row"><span class="k">Jours restants avant sortie</span><span class="v">${(() => { const r = daysRemainingOnSite(d); return r < 0 ? `Dépassé de ${Math.abs(r)} j` : `${r} j`; })()}</span></div>` : ''}
+    ${d.status === 'libreville' ? (() => { const info = librevilleInfo(d); return `
+    <div class="row"><span class="k">Phase actuelle</span><span class="v">${info.label}</span></div>
+    <div class="row"><span class="k">Jours restants dans cette phase</span><span class="v">${info.overdue > 0 ? `Séjour dépassé de ${info.overdue} j` : `${info.daysRemainingInPhase} j`}</span></div>
+    ${info.phase === 'astreinte' && info.overdue === 0 ? `<div class="alert-box" style="background:rgba(91,147,245,.12);border-color:rgba(91,147,245,.35);color:var(--info);">ℹ️ Semaine de repos terminée — disponible pour l'astreinte.</div>` : ''}
+    `; })() : ''}
     <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
     <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
     <div class="row"><span class="k">Véhicule assigné</span><span class="v">${vehiclePlateOrNone(d.vehicle_id)}</span></div>
@@ -1175,13 +1228,13 @@ async function deleteDriver(id){
 }
 
 function exportDriversCSV(){
-  const header = ['Nom','N° chauffeur','Matricule','Téléphone','Statut','Rotation (jours)','Jours restants avant sortie','Site','Depuis le','Jours','Véhicule assigné','Permis N°','Expiration permis','Alertes'];
+  const header = ['Nom','N° chauffeur','Matricule','Téléphone','Statut','Rotation (jours)','Jours restants avant sortie','Phase Libreville','Site','Depuis le','Jours','Véhicule assigné','Permis N°','Expiration permis','Alertes'];
   const rows = drivers.map(d=>[
     d.full_name, driverCode(d), d.matricule||'', d.phone||'', driverStatusLabel(d.status),
-    d.rotation_days||14, daysRemainingOnSite(d) ?? '', d.site||'',
+    d.rotation_days||14, daysRemainingOnSite(d) ?? '', librevilleInfo(d)?.label || '', d.site||'',
     d.status_since||'', daysSince(d.status_since), vehiclePlateOrNone(d.vehicle_id),
     d.license_number||'', d.license_expiry||'',
-    computeDriverAlerts(d).map(a=>a.text).join(' | ')
+    [...computeDriverAlerts(d), ...computeDriverNotices(d)].map(a=>a.text).join(' | ')
   ]);
   const csv = [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
   const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
