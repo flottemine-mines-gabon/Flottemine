@@ -255,7 +255,10 @@ Minimum version required to store current data is: `+i+`.
       <span>GMAO flotte — sous-traitants miniers</span>
     </div>
   </div>
-  <button class="logout hidden" id="logout-btn" onclick="logout()">Se déconnecter</button>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="logout hidden" id="install-btn" onclick="installApp()" style="display:inline-flex;align-items:center;gap:6px;color:var(--yellow);border-color:var(--yellow-dim);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Installer l'application</button>
+    <button class="logout hidden" id="logout-btn" onclick="logout()">Se déconnecter</button>
+  </div>
 </header>
 
 <div id="offline-banner">📡 Hors ligne — affichage des dernières données synchronisées</div>
@@ -344,6 +347,17 @@ Minimum version required to store current data is: `+i+`.
         <div class="field"><label>Intervalle d'entretien (km)</label><input required type="number" id="nv-interval" value="5000"></div>
         <button class="btn btn-primary" type="submit">Ajouter</button>
       </form>
+
+      <div class="filter-bar">
+        <input type="text" id="veh-search" placeholder="Rechercher une plaque, un modèle, un n° interne…" oninput="renderList()">
+        <select id="veh-filter-status" onchange="renderList()">
+          <option value="">Tous les statuts</option>
+          <option value="ok">OK</option>
+          <option value="warn">À surveiller</option>
+          <option value="bad">Urgent</option>
+          <option value="maintenance">En maintenance</option>
+        </select>
+      </div>
 
       <div class="grid-body">
         <div id="list"><div class="empty-note">Chargement…</div></div>
@@ -599,6 +613,27 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(()=>{}));
 }
 
+/* ---- Installation de l'app (avant même le Play Store) ---- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('install-btn').classList.remove('hidden');
+  }
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('install-btn').classList.add('hidden');
+});
+async function installApp(){
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('install-btn').classList.add('hidden');
+}
+
 function updateOfflineBanner(){
   const banner = document.getElementById('offline-banner');
   if (!navigator.onLine) {
@@ -800,8 +835,17 @@ function renderKpis(){
 function renderList(){
   const el = document.getElementById('list');
   if (!vehicles.length){ el.innerHTML = `<div class="empty-note">Aucun véhicule pour l'instant — ajoutez le premier ci-dessus.</div>`; return; }
+  const search = (document.getElementById('veh-search')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('veh-filter-status')?.value || '';
+  const filtered = vehicles.filter(v => {
+    if (statusFilter === 'maintenance' && v.availability !== 'en_maintenance') return false;
+    if (statusFilter && statusFilter !== 'maintenance' && computeStatus(v) !== statusFilter) return false;
+    if (search && !(`${v.plate} ${v.model} ${fleetCode(v)}`.toLowerCase().includes(search))) return false;
+    return true;
+  });
+  if (!filtered.length){ el.innerHTML = `<div class="empty-note">Aucun véhicule ne correspond à la recherche.</div>`; return; }
   el.innerHTML = '';
-  vehicles.forEach(v=>{
+  filtered.forEach(v=>{
     const s = computeStatus(v);
     const card = document.createElement('div');
     card.className = 'veh-card' + (v.id===selectedId ? ' selected':'');
