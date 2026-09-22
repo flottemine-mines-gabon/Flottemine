@@ -937,7 +937,26 @@ function renderDetail(){
 
     <div>
       <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Historique</span></div>
-      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item"><div class="hist-dot"></div><div class="hist-date">${h.date}</div><div>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}${h.cost ? ' — ' + Number(h.cost).toLocaleString('fr-FR') + ' XAF' : ''}</div></div>`).join('')
+      ${v.hist.length ? v.hist.map(h=>`<div class="hist-item">
+          <div class="hist-dot"></div>
+          <div class="hist-date">${h.date}</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+              <span>${h.description}${h.km_at_service ? ' — ' + h.km_at_service.toLocaleString('fr-FR') + ' km' : ''}${h.cost ? ' — ' + Number(h.cost).toLocaleString('fr-FR') + ' XAF' : ''}</span>
+              <span style="display:flex;gap:4px;flex-shrink:0;">
+                <button class="btn-tiny" onclick="toggleEl('hist-edit-${h.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+                <button class="btn-tiny danger" onclick="deleteIntervention('${h.id}','${v.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+              </span>
+            </div>
+            <form class="inline-form hidden" id="hist-edit-${h.id}" onsubmit="updateIntervention(event, '${h.id}', '${v.id}')" style="margin-top:6px;padding-top:10px;">
+              <div class="field"><label>Description</label><input required id="hedit-desc-${h.id}" value="${h.description}"></div>
+              <div class="field"><label>Kilométrage</label><input required type="number" id="hedit-km-${h.id}" value="${h.km_at_service||''}"></div>
+              <div class="field"><label>Coût (XAF, optionnel)</label><input type="number" id="hedit-cost-${h.id}" value="${h.cost||''}"></div>
+              <div class="field"><label>Date</label><input required type="date" id="hedit-date-${h.id}" value="${h.date}"></div>
+              <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
+            </form>
+          </div>
+        </div>`).join('')
         : '<div class="empty-note" style="padding:8px 0;">Aucune intervention enregistrée.</div>'}
     </div>
     <form class="inline-form" onsubmit="addIntervention(event, '${v.id}')">
@@ -2257,6 +2276,14 @@ function renderPartDetail(){
     <div class="row"><span class="k">Seuil d'alerte</span><span class="v">${p.min_quantity}</span></div>
     ${p.unit_price ? `<div class="row"><span class="k">Prix unitaire</span><span class="v">${Number(p.unit_price).toLocaleString('fr-FR')} XAF</span></div>` : ''}
     ${p.quantity<=p.min_quantity ? `<div class="alert-box">⚠ Stock bas — pensez à réapprovisionner.</div>` : ''}
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="toggleEl('edit-part-form-${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Modifier les informations</button>
+    <form class="inline-form hidden" id="edit-part-form-${p.id}" onsubmit="updatePart(event,'${p.id}')">
+      <div class="field"><label>Nom de la pièce</label><input required id="ep-name-${p.id}" value="${p.name}"></div>
+      <div class="field"><label>Référence</label><input id="ep-ref-${p.id}" value="${p.reference || ''}"></div>
+      <div class="field"><label>Seuil d'alerte stock bas</label><input required type="number" id="ep-min-${p.id}" value="${p.min_quantity}"></div>
+      <div class="field"><label>Prix unitaire (XAF, optionnel)</label><input type="number" id="ep-price-${p.id}" value="${p.unit_price || ''}"></div>
+      <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
+    </form>
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deletePart('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Supprimer cette pièce</button>
   `;
 }
@@ -2281,6 +2308,18 @@ async function adjustPartQty(id, delta){
   if (!p) return;
   const newQty = Math.max(0, p.quantity + delta);
   const { error } = await sb.from('parts').update({ quantity: newQty }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadParts();
+}
+
+async function updatePart(e, id){
+  e.preventDefault();
+  const name = document.getElementById(`ep-name-${id}`).value.trim();
+  const reference = document.getElementById(`ep-ref-${id}`).value.trim();
+  const min_quantity = parseInt(document.getElementById(`ep-min-${id}`).value, 10);
+  const priceRaw = document.getElementById(`ep-price-${id}`).value;
+  const unit_price = priceRaw ? parseFloat(priceRaw) : null;
+  const { error } = await sb.from('parts').update({ name, reference, min_quantity, unit_price }).eq('id', id);
   if (error) { alert("Erreur : " + error.message); return; }
   await loadParts();
 }
@@ -2365,6 +2404,25 @@ async function addIntervention(e, vehicleId){
   // On considère l'intervention comme la dernière vidange de référence et on met à jour le kilométrage
   const { error: e2 } = await sb.from('vehicles').update({ last_service_km: km_at_service, km: km_at_service }).eq('id', vehicleId);
   if (e2) { alert("Erreur : " + e2.message); return; }
+  await loadVehicles();
+}
+
+async function updateIntervention(e, id, vehicleId){
+  e.preventDefault();
+  const description = document.getElementById(`hedit-desc-${id}`).value.trim();
+  const km_at_service = parseInt(document.getElementById(`hedit-km-${id}`).value, 10);
+  const costRaw = document.getElementById(`hedit-cost-${id}`).value;
+  const cost = costRaw ? parseFloat(costRaw) : null;
+  const date = document.getElementById(`hedit-date-${id}`).value;
+  const { error } = await sb.from('interventions').update({ description, km_at_service, cost, date }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
+}
+
+async function deleteIntervention(id, vehicleId){
+  if (!confirm("Supprimer cette intervention ?")) return;
+  const { error } = await sb.from('interventions').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
   await loadVehicles();
 }
 
