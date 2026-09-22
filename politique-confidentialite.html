@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — FlotteMine</title>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0D1210">
+<style>
+  :root{
+    --bg:#0D1210; --surface:#161C19; --surface-2:#1E2622;
+    --ink:#F2F0EA; --ink-soft:#8FA095; --line:#2A332D; --yellow:#F5B301;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;line-height:1.6;}
+  h1,h2{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-0.01em;}
+  header{background:var(--surface);padding:16px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:18px;}
+  .brand-mark{width:30px;height:30px;border-radius:6px;background:var(--yellow);display:flex;align-items:center;justify-content:center;}
+  header a{color:var(--ink-soft);text-decoration:none;font-size:13.5px;border:1px solid var(--line);padding:7px 14px;border-radius:6px;}
+  header a:hover{border-color:var(--yellow);color:var(--ink);}
+  main{max-width:760px;margin:0 auto;padding:36px 20px 80px;}
+  h1{font-size:26px;margin:0 0 6px;}
+  .updated{color:var(--ink-soft);font-size:13px;margin-bottom:32px;}
+  h2{font-size:18px;margin:36px 0 10px;color:var(--yellow);}
+  p{color:var(--ink);font-size:14.5px;margin:0 0 12px;}
+  ul{margin:0 0 12px;padding-left:20px;}
+  li{margin-bottom:6px;font-size:14.5px;}
+  table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13.5px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--ink-soft);font-weight:600;font-family:'IBM Plex Sans';}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin:16px 0;}
+  .card b{color:var(--yellow);}
+  a{color:var(--yellow);}
+  .nav-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:36px;padding-top:20px;border-top:1px solid var(--line);}
+  .nav-links a{border:1px solid var(--line);padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13.5px;}
+  @media (max-width:480px){ main{padding:24px 16px 60px;} table{font-size:12px;} th,td{padding:7px 6px;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C7 2 3 6 3 11c0 6.5 9 11 9 11s9-4.5 9-11c0-5-4-9-9-9z" fill="#D6A24C"/><circle cx="12" cy="10.5" r="3.6" fill="#0F4C3A"/></svg>
+    </div>
+    FlotteMine
+  </div>
+  <a href="index.html">← Retour à l'application</a>
+</header>
+
+<main>
+  <h1>Politique de confidentialité</h1>
+  <div class="updated">Dernière mise à jour : 22 septembre 2026</div>
+
+  <p>Cette page explique quelles données FlotteMine collecte, pourquoi, où elles sont hébergées, et quels sont vos droits — que vous soyez le client utilisant l'application ou un chauffeur dont les informations y sont enregistrées par son employeur.</p>
+
+  <h2>1. Responsable du traitement</h2>
+  <div class="card">
+    <p>Samuel Ekomo — Téléphone : +241 77 719 076 / 076 262 952 — Email : samuelekomo24@gmail.com</p>
+  </div>
+
+  <h2>2. Données collectées</h2>
+  <table>
+    <tr><th>Catégorie</th><th>Données</th></tr>
+    <tr><td>Compte client</td><td>Email, mot de passe (chiffré, jamais stocké en clair)</td></tr>
+    <tr><td>Chauffeurs</td><td>Nom, téléphone, matricule, photo, numéro et date d'expiration du permis, statut et localisation (site / repos / Libreville / congé), véhicule assigné</td></tr>
+    <tr><td>Véhicules</td><td>Plaque, modèle, catégorie, kilométrage, historique d'entretien, photos de pannes</td></tr>
+    <tr><td>Pièces & stock</td><td>Références et quantités de pièces détachées (aucune donnée personnelle)</td></tr>
+    <tr><td>Usage technique</td><td>Données stockées temporairement dans le navigateur (localStorage) pour permettre le fonctionnement hors ligne</td></tr>
+  </table>
+
+  <h2>3. Finalités</h2>
+  <p>Ces données sont utilisées exclusivement pour permettre au client de suivre son propre parc de véhicules et son propre personnel roulant : disponibilité, entretien, alertes, identification par badge QR. Elles ne sont ni vendues, ni partagées à des fins commerciales ou publicitaires, ni utilisées pour entraîner un quelconque système.</p>
+
+  <h2>4. Qui a accès aux données</h2>
+  <p>Chaque compte client n'a accès qu'à ses propres données (véhicules, chauffeurs, pièces). Cette séparation est appliquée techniquement au niveau de la base de données, pas seulement dans l'interface. L'éditeur de FlotteMine peut accéder aux données hébergées à des fins strictement techniques (maintenance, support, sécurité) ou sur demande légale.</p>
+
+  <h2>5. Hébergement et sécurité</h2>
+  <ul>
+    <li>Base de données et fichiers hébergés par Supabase, sur des serveurs situés en Irlande (Union Européenne).</li>
+    <li>Connexions chiffrées (HTTPS) entre votre appareil et les serveurs.</li>
+    <li>Mots de passe gérés par le service d'authentification de Supabase, jamais stockés en clair.</li>
+    <li>Accès aux données protégé par des règles de sécurité au niveau de chaque ligne de la base de données (un client ne peut techniquement pas lire les données d'un autre client).</li>
+  </ul>
+
+  <h2>6. Durée de conservation</h2>
+  <p>Les données sont conservées tant que le compte client reste actif. En cas de résiliation ou de suppression d'un compte, les données associées peuvent être supprimées sur simple demande auprès de l'éditeur.</p>
+
+  <h2>7. Vos droits</h2>
+  <p>Toute personne dont des données sont enregistrées dans FlotteMine (client ou chauffeur dont les informations ont été saisies par son employeur) peut demander à y accéder, les faire corriger, ou en demander la suppression, en écrivant à l'adresse indiquée à la section 1. Une demande concernant les données d'un chauffeur doit passer par l'entreprise qui gère son compte, celle-ci étant responsable des informations qu'elle y saisit.</p>
+
+  <h2>8. Cookies et stockage local</h2>
+  <p>FlotteMine n'utilise aucun cookie publicitaire ni traceur tiers. Le navigateur conserve localement (localStorage) une copie des dernières données synchronisées, uniquement pour permettre à l'application de continuer à afficher les informations en l'absence de connexion internet.</p>
+
+  <h2>9. Modifications</h2>
+  <p>Cette politique peut évoluer avec l'application. La date de dernière mise à jour est indiquée en haut de cette page.</p>
+
+  <h2>10. Contact</h2>
+  <p>Pour toute question ou demande relative à vos données, contactez l'éditeur aux coordonnées de la section 1.</p>
+
+  <div class="nav-links">
+    <a href="index.html">← Retour à l'application</a>
+    <a href="mentions-legales.html">Mentions légales & CGU →</a>
+  </div>
+</main>
+</body>
+</html>
