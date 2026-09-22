@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0D1210">
 <style>
@@ -155,6 +157,30 @@
 
   .status-quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 
+  /* ---- Catégories & code interne ---- */
+  .category-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line);}
+  .fleet-code{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-soft);}
+  .countdown-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-soft);}
+  .countdown-chip.warn{background:rgba(245,179,1,.15);color:var(--warn);}
+  .countdown-chip.bad{background:rgba(229,87,63,.15);color:var(--bad);}
+
+  /* ---- QR codes ---- */
+  .qr-block{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:16px;margin:14px 0;}
+  .qr-block canvas{border-radius:6px;background:#fff;padding:8px;}
+  .qr-label{text-align:center;}
+  .qr-label b{display:block;font-family:'Space Grotesk';font-size:15px;letter-spacing:0.02em;}
+  .qr-label span{display:block;font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono';margin-top:2px;}
+
+  /* ---- Scanner ---- */
+  .scan-wrap{max-width:480px;margin:0 auto;text-align:center;}
+  .scan-video-box{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:1/1;max-width:360px;margin:0 auto;border:1px solid var(--line);}
+  .scan-video-box video{width:100%;height:100%;object-fit:cover;}
+  .scan-frame{position:absolute;inset:12%;border:2px solid var(--yellow);border-radius:12px;pointer-events:none;}
+  #scan-status{color:var(--ink-soft);font-size:13px;margin-top:12px;font-family:'IBM Plex Sans';}
+  .scan-result{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:16px;text-align:left;}
+  .scan-manual{display:flex;gap:8px;margin-top:16px;}
+  .scan-manual input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;background:var(--surface-2);color:var(--ink);font-family:'IBM Plex Sans';}
+
   /* ---- Offline banner ---- */
   #offline-banner{display:none;background:var(--yellow);color:#15130A;text-align:center;padding:9px 16px;font-size:12.8px;font-weight:600;font-family:'IBM Plex Sans';}
   #offline-banner.show{display:block;}
@@ -213,6 +239,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Véhicules</button>
       <button class="tab-btn" id="tab-btn-drivers" onclick="switchTab('drivers')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Chauffeurs</button>
+      <button class="tab-btn" id="tab-btn-scan" onclick="switchTab('scan')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>Scanner</button>
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
     </div>
@@ -238,7 +265,7 @@
 
       <div class="inline-form hidden" id="import-panel">
         <p style="margin:0 0 12px;font-size:13px;color:var(--ink-soft);">
-          Colonnes attendues : <b>Plaque</b>, Modèle, Kilométrage, KM dernière vidange, Intervalle entretien.
+          Colonnes attendues : <b>Plaque</b>, Catégorie, Modèle, Kilométrage, KM dernière vidange, Intervalle entretien.
           Pas encore le bon format ? <a href="#" onclick="downloadTemplate();return false;" style="color:var(--yellow);">Télécharger un modèle</a>.
         </p>
         <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="import-file" accept=".csv,.xlsx,.xls"></div>
@@ -248,6 +275,7 @@
 
       <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
         <div class="field"><label>Plaque d'immatriculation</label><input required id="nv-plate" placeholder="GA-1050-BL"></div>
+        <div class="field"><label>Catégorie</label><select id="nv-category" class="category-select" onchange="onCategorySelectChange(this)"></select></div>
         <div class="field"><label>Modèle</label><input id="nv-model" value="Hilux GUN125"></div>
         <div class="field"><label>Kilométrage actuel</label><input required type="number" id="nv-km" placeholder="15000"></div>
         <div class="field"><label>Kilométrage à la dernière vidange</label><input required type="number" id="nv-lastservice" placeholder="10000"></div>
@@ -285,7 +313,7 @@
 
       <div class="inline-form hidden" id="driver-import-panel">
         <p style="margin:0 0 12px;font-size:13px;color:var(--ink-soft);">
-          Colonnes attendues : <b>Nom</b>, Matricule, Téléphone, Statut (Sur site / En repos / À Libreville / En congé / Absent), Site, Depuis le, Permis N°, Expiration permis.
+          Colonnes attendues : <b>Nom</b>, Matricule, Téléphone, Statut (Sur site / En repos / À Libreville / En congé / Absent), Rotation (jours : 14 ou 21), Site, Depuis le, Permis N°, Expiration permis.
           Pas encore le bon format ? <a href="#" onclick="downloadDriverTemplate();return false;" style="color:var(--yellow);">Télécharger un modèle</a>.
         </p>
         <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="driver-import-file" accept=".csv,.xlsx,.xls"></div>
@@ -295,7 +323,7 @@
 
       <form class="inline-form hidden" id="add-driver-form" onsubmit="addDriver(event)">
         <div class="field"><label>Nom complet</label><input required id="nd-name" placeholder="Ex : Jean-Pierre Ondo"></div>
-        <div class="field"><label>Matricule</label><input id="nd-matricule" placeholder="Ex : CH-0042"></div>
+        <div class="field"><label>Matricule (laisser vide pour attribution automatique)</label><input id="nd-matricule" placeholder="Ex : CH-0042"></div>
         <div class="field"><label>Téléphone</label><input id="nd-phone" placeholder="Ex : 074 12 34 56"></div>
         <div class="field"><label>Statut actuel</label>
           <select id="nd-status">
@@ -304,6 +332,12 @@
             <option value="libreville">À Libreville</option>
             <option value="conge">En congé</option>
             <option value="absent">Absent / indisponible</option>
+          </select>
+        </div>
+        <div class="field"><label>Durée de rotation sur site</label>
+          <select id="nd-rotation">
+            <option value="14" selected>2 semaines (14 jours)</option>
+            <option value="21">3 semaines (21 jours)</option>
           </select>
         </div>
         <div class="field"><label>Site / localisation</label><input id="nd-site" placeholder="Ex : Site Moanda"></div>
@@ -329,6 +363,32 @@
       <div class="grid-body">
         <div id="driver-list"><div class="empty-note">Chargement…</div></div>
         <div class="detail" id="driver-detail"><div class="empty-note">Sélectionnez un chauffeur pour voir le détail.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== ONGLET SCANNER ===== -->
+    <div id="tab-scan" class="tab-panel hidden">
+      <div class="panel-title">
+        <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>Scanner un badge chauffeur ou véhicule</h2>
+      </div>
+      <div class="scan-wrap">
+        <div class="scan-video-box">
+          <video id="scan-video" playsinline muted></video>
+          <div class="scan-frame"></div>
+        </div>
+        <canvas id="scan-canvas" class="hidden"></canvas>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary" id="scan-start-btn" onclick="startScan()">📷 Démarrer le scan</button>
+          <button class="btn btn-secondary hidden" id="scan-stop-btn" onclick="stopScan()">Arrêter</button>
+        </div>
+        <div id="scan-status">Appuie sur "Démarrer le scan" et vise le QR code du badge.</div>
+
+        <div class="scan-manual">
+          <input type="text" id="scan-manual-input" placeholder="Ou saisis un matricule / une plaque…">
+          <button class="btn btn-secondary" onclick="manualScanLookup()">Rechercher</button>
+        </div>
+
+        <div id="scan-result"></div>
       </div>
     </div>
 
@@ -517,7 +577,8 @@ async function onLoggedIn(){
 
 /* ---- Tabs ---- */
 function switchTab(name){
-  ['vehicles','drivers','breakdowns','parts'].forEach(t=>{
+  if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
+  ['vehicles','drivers','scan','breakdowns','parts'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
@@ -577,6 +638,7 @@ async function loadVehicles(){
   const vsel = document.getElementById('nb-vehicle');
   if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
   populateVehicleSelects();
+  populateCategorySelects();
 }
 
 function populateVehicleSelects(){
@@ -621,6 +683,7 @@ function renderList(){
         <b>${v.plate}</b>
         <span class="status ${s}">${statusLabel(s)}</span>
       </div>
+      <div class="veh-meta"><span class="category-badge">${v.category || 'Véhicule léger'}</span> <span class="fleet-code">${fleetCode(v)}</span></div>
       <div class="veh-meta">${v.model} · ${v.km.toLocaleString('fr-FR')} km</div>
       <div class="veh-meta">${nextText(v)}</div>
       ${v.availability==='en_maintenance' ? `<div class="veh-meta" style="color:var(--warn);font-weight:600;">En maintenance${v.maintenance_until ? ' — sortie prévue le '+v.maintenance_until : ''}</div>` : ''}`;
@@ -637,12 +700,20 @@ function renderDetail(){
   el.innerHTML = `
     <h3>${v.plate}</h3>
     <div class="sub">${v.model} — ${v.km.toLocaleString('fr-FR')} km</div>
+    <div class="row"><span class="k">N° interne</span><span class="v fleet-code">${fleetCode(v)}</span></div>
+    <div class="row"><span class="k">Catégorie</span><span class="v"><select class="category-select" onchange="onCategorySelectChange(this,'${v.id}')"></select></span></div>
     <div class="row"><span class="k">Statut</span><span class="v">${statusLabel(s)}</span></div>
     <div class="row"><span class="k">Prochaine échéance</span><span class="v">${nextText(v)}</span></div>
     <div class="row"><span class="k">Disponibilité</span><span class="v">${v.availability==='en_maintenance' ? 'En maintenance' : 'Disponible'}</span></div>
     ${v.availability==='en_maintenance' ? `<div class="row"><span class="k">Sortie prévue</span><span class="v">${v.maintenance_until || '—'}</span></div>` : ''}
     <div class="row"><span class="k">Coût total entretien</span><span class="v">${v.hist.reduce((sum,h)=>sum+(Number(h.cost)||0),0).toLocaleString('fr-FR')} XAF</span></div>
     ${s==='bad' ? `<div class="alert-box">⚠ Intervention à programmer sans délai.</div>` : ''}
+
+    <div class="qr-block">
+      <canvas id="qr-vehicle-${v.id}"></canvas>
+      <div class="qr-label"><b>${v.plate}</b><span>${fleetCode(v)}</span></div>
+      <button class="btn-tiny" onclick="downloadQr('qr-vehicle-${v.id}','badge-${v.plate}')">Télécharger le badge QR</button>
+    </div>
 
     ${v.availability==='disponible' ? `
       <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="toggleEl('maint-form-${v.id}')">Mettre en maintenance</button>
@@ -667,6 +738,75 @@ function renderDetail(){
     </form>
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E9B79B;" onclick="deleteVehicle('${v.id}')">Supprimer ce véhicule</button>
   `;
+  populateCategorySelects(v.category);
+  renderQrToCanvas(document.getElementById(`qr-vehicle-${v.id}`), JSON.stringify({ type: 'vehicle', id: v.id, plate: v.plate, fleet_number: fleetCode(v) }));
+}
+
+/* ---- Codes internes & QR codes ---- */
+function fleetCode(v){ return v.fleet_number ? 'VH-' + String(v.fleet_number).padStart(4,'0') : '—'; }
+function driverCode(d){ return d.driver_code ? 'CH-' + String(d.driver_code).padStart(4,'0') : '—'; }
+
+async function renderQrToCanvas(canvasEl, text){
+  if (!canvasEl || typeof QRCode === 'undefined') return;
+  try {
+    await QRCode.toCanvas(canvasEl, text, { width: 140, margin: 1, color: { dark: '#0D1210', light: '#FFFFFF' } });
+  } catch(e) { /* librairie QR non chargée (hors ligne) */ }
+}
+
+function downloadQr(canvasId, filename){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `${filename}.png`;
+  a.click();
+}
+
+/* ---- Catégories de véhicules (extensible) ---- */
+const DEFAULT_VEHICLE_CATEGORIES = ['Véhicule léger', 'Poids lourd', 'Engin'];
+
+function getVehicleCategories(){
+  let custom = [];
+  try { custom = JSON.parse(localStorage.getItem('fm-vehicle-categories')) || []; } catch(e) {}
+  const fromData = vehicles.map(v => v.category).filter(Boolean);
+  const all = [...DEFAULT_VEHICLE_CATEGORIES, ...custom, ...fromData];
+  return [...new Set(all)];
+}
+function saveCustomCategory(cat){
+  let custom = [];
+  try { custom = JSON.parse(localStorage.getItem('fm-vehicle-categories')) || []; } catch(e) {}
+  if (!custom.includes(cat)) { custom.push(cat); localStorage.setItem('fm-vehicle-categories', JSON.stringify(custom)); }
+}
+
+function populateCategorySelects(selected){
+  document.querySelectorAll('select.category-select').forEach(sel=>{
+    const current = selected !== undefined ? selected : sel.value;
+    const opts = getVehicleCategories().map(c=>`<option value="${c}">${c}</option>`).join('');
+    sel.innerHTML = opts + '<option value="__new__">+ Ajouter une catégorie…</option>';
+    if (current) sel.value = current;
+  });
+}
+
+function onCategorySelectChange(selectEl, vehicleId){
+  if (selectEl.value === '__new__') {
+    const cat = prompt('Nom de la nouvelle catégorie de véhicule :');
+    if (cat && cat.trim()) {
+      saveCustomCategory(cat.trim());
+      populateCategorySelects(cat.trim());
+      if (vehicleId) updateVehicleCategory(vehicleId, cat.trim());
+    } else {
+      populateCategorySelects(DEFAULT_VEHICLE_CATEGORIES[0]);
+    }
+    return;
+  }
+  if (vehicleId) updateVehicleCategory(vehicleId, selectEl.value);
+}
+
+async function updateVehicleCategory(id, category){
+  if (category === '__new__') return;
+  const { error } = await sb.from('vehicles').update({ category }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
 }
 
 /* ---- Chauffeurs ---- */
@@ -718,12 +858,32 @@ function daysUntil(dateStr){
   return Math.floor((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
+function daysRemainingOnSite(d){
+  if (d.status !== 'sur_site') return null;
+  const rotation = d.rotation_days || 14;
+  return rotation - daysSince(d.status_since);
+}
+const SITE_EXIT_WARN_DAYS = 7;
+
+function countdownChipHtml(d){
+  const remaining = daysRemainingOnSite(d);
+  if (remaining === null) return '';
+  const cls = remaining < 0 ? 'bad' : remaining <= SITE_EXIT_WARN_DAYS ? 'warn' : '';
+  const text = remaining < 0 ? `Sortie J+${Math.abs(remaining)}` : `Sortie J-${remaining}`;
+  return ` · <span class="countdown-chip ${cls}">${text}</span>`;
+}
+
 function computeDriverAlerts(d){
   const alerts = [];
   if (d.status === 'repos') {
     const ds = daysSince(d.status_since);
     if (ds >= REST_BAD_DAYS) alerts.push({ level:'bad', text:`En repos depuis ${ds} jours — rotation à vérifier.` });
     else if (ds >= REST_WARN_DAYS) alerts.push({ level:'warn', text:`En repos depuis ${ds} jours.` });
+  }
+  if (d.status === 'sur_site') {
+    const remaining = daysRemainingOnSite(d);
+    if (remaining < 0) alerts.push({ level:'bad', text:`Rotation dépassée de ${Math.abs(remaining)} jour(s) — sortie en retard.` });
+    else if (remaining <= SITE_EXIT_WARN_DAYS) alerts.push({ level:'warn', text:`Sortie de site prévue dans ${remaining} jour(s).` });
   }
   if (d.status === 'absent') {
     alerts.push({ level:'bad', text:`Statut "Absent / indisponible" — à clarifier.` });
@@ -800,7 +960,7 @@ function renderDriverList(){
           </div>
           <span class="status ${driverStatusBadge(d.status)}">${driverStatusLabel(d.status)}</span>
         </div>
-        <div class="driver-meta">Depuis ${daysSince(d.status_since)} jour(s)${lvl ? ` · <span class="alert-chip ${lvl==='warn'?'warn':''}">⚠ alerte</span>` : ''}</div>
+        <div class="driver-meta">Depuis ${daysSince(d.status_since)} jour(s)${countdownChipHtml(d)}${lvl ? ` · <span class="alert-chip ${lvl==='warn'?'warn':''}">⚠ alerte</span>` : ''}</div>
         <div class="driver-actions">
           <select class="status-select" onclick="event.stopPropagation()" onchange="quickChangeDriverStatus('${d.id}', this.value)">
             ${Object.keys(DRIVER_STATUS_META).map(k=>`<option value="${k}" ${k===d.status?'selected':''}>${DRIVER_STATUS_META[k].label}</option>`).join('')}
@@ -852,13 +1012,21 @@ async function renderDriverDetail(){
       ${avatarHtml(d, 'lg')}
       <div>
         <h3 style="margin:0;">${d.full_name}</h3>
-        <div class="sub" style="margin-bottom:0;">${d.matricule || 'Sans matricule'}</div>
+        <div class="sub" style="margin-bottom:0;">${d.matricule || 'Sans matricule'} · ${driverCode(d)}</div>
       </div>
     </div>
     ${alerts.map(a=>`<div class="alert-box" style="${a.level==='warn' ? 'background:rgba(245,179,1,.12);border-color:rgba(245,179,1,.35);color:var(--warn);' : ''}">⚠ ${a.text}</div>`).join('')}
 
+    <div class="qr-block">
+      <canvas id="qr-driver-${d.id}"></canvas>
+      <div class="qr-label"><b>${d.matricule || driverCode(d)}</b></div>
+      <button class="btn-tiny" onclick="downloadQr('qr-driver-${d.id}','badge-${d.matricule || driverCode(d)}')">Télécharger le badge QR</button>
+    </div>
+
     <div class="row"><span class="k">Statut</span><span class="v">${driverStatusLabel(d.status)}</span></div>
     <div class="row"><span class="k">Depuis le</span><span class="v">${d.status_since || '—'} (${daysSince(d.status_since)} j)</span></div>
+    ${d.status === 'sur_site' ? `<div class="row"><span class="k">Durée de rotation</span><span class="v">${d.rotation_days||14} jours</span></div>
+    <div class="row"><span class="k">Jours restants avant sortie</span><span class="v">${(() => { const r = daysRemainingOnSite(d); return r < 0 ? `Dépassé de ${Math.abs(r)} j` : `${r} j`; })()}</span></div>` : ''}
     <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
     <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
     <div class="row"><span class="k">Véhicule assigné</span><span class="v">${vehiclePlateOrNone(d.vehicle_id)}</span></div>
@@ -880,6 +1048,12 @@ async function renderDriverDetail(){
       <div class="field"><label>Nom complet</label><input required id="ed-name-${d.id}" value="${d.full_name}"></div>
       <div class="field"><label>Matricule</label><input id="ed-matricule-${d.id}" value="${d.matricule||''}"></div>
       <div class="field"><label>Téléphone</label><input id="ed-phone-${d.id}" value="${d.phone||''}"></div>
+      <div class="field"><label>Durée de rotation sur site</label>
+        <select id="ed-rotation-${d.id}">
+          <option value="14" ${(d.rotation_days||14)===14?'selected':''}>2 semaines (14 jours)</option>
+          <option value="21" ${(d.rotation_days||14)===21?'selected':''}>3 semaines (21 jours)</option>
+        </select>
+      </div>
       <div class="field"><label>Site / localisation</label><input id="ed-site-${d.id}" value="${d.site||''}"></div>
       <div class="field"><label>Véhicule assigné</label><select id="ed-vehicle-${d.id}" class="vehicle-select"></select></div>
       <div class="field"><label>N° de permis</label><input id="ed-license-${d.id}" value="${d.license_number||''}"></div>
@@ -899,6 +1073,10 @@ async function renderDriverDetail(){
   populateVehicleSelects();
   const edSel = document.getElementById(`ed-vehicle-${d.id}`);
   if (edSel) edSel.value = d.vehicle_id || '';
+  renderQrToCanvas(document.getElementById(`qr-driver-${d.id}`), JSON.stringify({
+    type: 'driver', id: d.id, matricule: d.matricule || driverCode(d),
+    full_name: d.full_name, phone: d.phone || '', license_number: d.license_number || ''
+  }));
 }
 
 function openStatusForm(id, status){
@@ -926,6 +1104,7 @@ async function addDriver(e){
   const matricule = document.getElementById('nd-matricule').value.trim();
   const phone = document.getElementById('nd-phone').value.trim();
   const status = document.getElementById('nd-status').value;
+  const rotation_days = parseInt(document.getElementById('nd-rotation').value, 10) || 14;
   const site = document.getElementById('nd-site').value.trim();
   const vehicle_id = document.getElementById('nd-vehicle').value || null;
   const license_number = document.getElementById('nd-license').value.trim();
@@ -938,12 +1117,15 @@ async function addDriver(e){
     if (photo_url === null) return;
   }
 
-  const { error } = await sb.from('drivers').insert([{
-    full_name, matricule, phone, status, site, vehicle_id,
+  const { data: created, error } = await sb.from('drivers').insert([{
+    full_name, matricule, phone, status, rotation_days, site, vehicle_id,
     license_number, license_expiry, photo_url,
     status_since: new Date().toISOString().slice(0,10)
-  }]);
+  }]).select();
   if (error) { alert("Erreur : " + error.message); return; }
+  if (!matricule && created && created[0]) {
+    await sb.from('drivers').update({ matricule: driverCode(created[0]) }).eq('id', created[0].id);
+  }
   document.getElementById('add-driver-form').reset();
   document.getElementById('add-driver-form').classList.add('hidden');
   await loadDrivers();
@@ -955,6 +1137,7 @@ async function updateDriver(e, id){
     full_name: document.getElementById(`ed-name-${id}`).value.trim(),
     matricule: document.getElementById(`ed-matricule-${id}`).value.trim(),
     phone: document.getElementById(`ed-phone-${id}`).value.trim(),
+    rotation_days: parseInt(document.getElementById(`ed-rotation-${id}`).value, 10) || 14,
     site: document.getElementById(`ed-site-${id}`).value.trim(),
     vehicle_id: document.getElementById(`ed-vehicle-${id}`).value || null,
     license_number: document.getElementById(`ed-license-${id}`).value.trim(),
@@ -980,9 +1163,10 @@ async function deleteDriver(id){
 }
 
 function exportDriversCSV(){
-  const header = ['Nom','Matricule','Téléphone','Statut','Site','Depuis le','Jours','Véhicule assigné','Permis N°','Expiration permis','Alertes'];
+  const header = ['Nom','N° chauffeur','Matricule','Téléphone','Statut','Rotation (jours)','Jours restants avant sortie','Site','Depuis le','Jours','Véhicule assigné','Permis N°','Expiration permis','Alertes'];
   const rows = drivers.map(d=>[
-    d.full_name, d.matricule||'', d.phone||'', driverStatusLabel(d.status), d.site||'',
+    d.full_name, driverCode(d), d.matricule||'', d.phone||'', driverStatusLabel(d.status),
+    d.rotation_days||14, daysRemainingOnSite(d) ?? '', d.site||'',
     d.status_since||'', daysSince(d.status_since), vehiclePlateOrNone(d.vehicle_id),
     d.license_number||'', d.license_expiry||'',
     computeDriverAlerts(d).map(a=>a.text).join(' | ')
@@ -1001,7 +1185,7 @@ function exportDriversCSV(){
 let importDriverRows = [];
 
 function downloadDriverTemplate(){
-  const csv = 'Nom;Matricule;Téléphone;Statut;Site;Depuis le;Permis N°;Expiration permis\nJean-Pierre Ondo;CH-0042;074123456;Sur site;Site Moanda;2026-09-01;123456/GA;2027-03-15\n';
+  const csv = 'Nom;Matricule;Téléphone;Statut;Rotation (jours);Site;Depuis le;Permis N°;Expiration permis\nJean-Pierre Ondo;CH-0042;074123456;Sur site;14;Site Moanda;2026-09-01;123456/GA;2027-03-15\n';
   const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1014,6 +1198,7 @@ const DRIVER_HEADER_ALIASES = {
   matricule: ['matricule','id','matricule chauffeur'],
   phone: ['telephone','téléphone','tel','phone'],
   status: ['statut','status'],
+  rotation_days: ['rotation (jours)','rotation','duree de rotation','jours de rotation'],
   site: ['site','localisation','lieu'],
   status_since: ['depuis le','date statut','depuis'],
   license_number: ['permis n','permis n°','numero de permis','n de permis'],
@@ -1077,6 +1262,7 @@ function parseDriverImportFile(){
           matricule: String(m.matricule||'').trim(),
           phone: String(m.phone||'').trim(),
           status: normalizeDriverStatus(m.status),
+          rotation_days: [14,21].includes(parseInt(m.rotation_days,10)) ? parseInt(m.rotation_days,10) : 14,
           site: String(m.site||'').trim(),
           status_since: normalizeDriverDate(m.status_since),
           license_number: String(m.license_number||'').trim(),
@@ -1111,6 +1297,113 @@ async function confirmDriverImport(){
   document.getElementById('driver-import-file').value = '';
   document.getElementById('driver-import-panel').classList.add('hidden');
   await loadDrivers();
+}
+
+/* ---- Scanner QR (chauffeurs & véhicules) ---- */
+let scanStream = null;
+let scanRAF = null;
+
+async function startScan(){
+  const video = document.getElementById('scan-video');
+  const status = document.getElementById('scan-status');
+  if (typeof jsQR === 'undefined') { status.textContent = "Le lecteur QR n'a pas pu se charger (vérifie ta connexion)."; return; }
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  } catch(err) {
+    status.textContent = "Caméra non accessible : " + err.message;
+    return;
+  }
+  video.srcObject = scanStream;
+  await video.play();
+  document.getElementById('scan-start-btn').classList.add('hidden');
+  document.getElementById('scan-stop-btn').classList.remove('hidden');
+  status.textContent = 'Scan en cours…';
+  document.getElementById('scan-result').innerHTML = '';
+  scanLoop();
+}
+
+function stopScan(){
+  if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+  if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+  const video = document.getElementById('scan-video');
+  if (video) video.srcObject = null;
+  document.getElementById('scan-start-btn')?.classList.remove('hidden');
+  document.getElementById('scan-stop-btn')?.classList.add('hidden');
+}
+
+function scanLoop(){
+  const video = document.getElementById('scan-video');
+  const canvas = document.getElementById('scan-canvas');
+  if (!video || !scanStream) return;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code && code.data) {
+      handleScanResult(code.data);
+      stopScan();
+      return;
+    }
+  }
+  scanRAF = requestAnimationFrame(scanLoop);
+}
+
+function handleScanResult(text){
+  let parsed = null;
+  try { parsed = JSON.parse(text); } catch(e) {}
+  if (parsed && parsed.type === 'vehicle' && parsed.id) { renderScanResultVehicle(parsed.id); return; }
+  if (parsed && parsed.type === 'driver' && parsed.id) { renderScanResultDriver(parsed.id); return; }
+  manualLookupText(text);
+}
+
+function manualScanLookup(){
+  const text = document.getElementById('scan-manual-input').value.trim();
+  if (!text) return;
+  manualLookupText(text);
+}
+
+function manualLookupText(text){
+  const norm = text.toLowerCase().trim();
+  const v = vehicles.find(x => x.plate.toLowerCase() === norm || fleetCode(x).toLowerCase() === norm);
+  if (v) { renderScanResultVehicle(v.id); return; }
+  const d = drivers.find(x => (x.matricule||'').toLowerCase() === norm || driverCode(x).toLowerCase() === norm);
+  if (d) { renderScanResultDriver(d.id); return; }
+  document.getElementById('scan-status').textContent = `Aucun résultat pour "${text}".`;
+  document.getElementById('scan-result').innerHTML = '';
+}
+
+function goToVehicle(id){ switchTab('vehicles'); selectedId = id; renderList(); renderDetail(); }
+function goToDriver(id){ switchTab('drivers'); selectDriver(id); }
+
+function renderScanResultVehicle(id){
+  const v = vehicles.find(x=>x.id===id);
+  const el = document.getElementById('scan-result');
+  document.getElementById('scan-status').textContent = 'Véhicule trouvé.';
+  if (!v) { el.innerHTML = `<div class="alert-box">Ce véhicule n'existe plus dans le système.</div>`; return; }
+  const s = computeStatus(v);
+  el.innerHTML = `
+    <div class="scan-result">
+      <div class="veh-top"><b>${v.plate}</b><span class="status ${s}">${statusLabel(s)}</span></div>
+      <div class="veh-meta"><span class="fleet-code">${fleetCode(v)}</span> · <span class="category-badge">${v.category||'Véhicule léger'}</span> · ${v.model}</div>
+      <div class="veh-meta">${nextText(v)}</div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="goToVehicle('${v.id}')">Voir la fiche complète</button>
+    </div>`;
+}
+
+function renderScanResultDriver(id){
+  const d = drivers.find(x=>x.id===id);
+  const el = document.getElementById('scan-result');
+  document.getElementById('scan-status').textContent = 'Chauffeur trouvé.';
+  if (!d) { el.innerHTML = `<div class="alert-box">Ce chauffeur n'existe plus dans le système.</div>`; return; }
+  el.innerHTML = `
+    <div class="scan-result">
+      <div class="driver-top"><b>${d.full_name}</b><span class="status ${driverStatusBadge(d.status)}">${driverStatusLabel(d.status)}</span></div>
+      <div class="driver-meta">${d.matricule || driverCode(d)} · ${d.site || 'Site non renseigné'}</div>
+      <div class="driver-meta">Depuis ${daysSince(d.status_since)} jour(s)${countdownChipHtml(d)}</div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="goToDriver('${d.id}')">Voir la fiche complète</button>
+    </div>`;
 }
 
 /* ---- Pannes (breakdowns) ---- */
@@ -1370,7 +1663,9 @@ async function addVehicle(e){
   const km = parseInt(document.getElementById('nv-km').value, 10);
   const last_service_km = parseInt(document.getElementById('nv-lastservice').value, 10);
   const service_interval_km = parseInt(document.getElementById('nv-interval').value, 10);
-  const { error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km }]);
+  const categoryRaw = document.getElementById('nv-category').value;
+  const category = categoryRaw === '__new__' ? DEFAULT_VEHICLE_CATEGORIES[0] : categoryRaw;
+  const { error } = await sb.from('vehicles').insert([{ plate, model, km, last_service_km, service_interval_km, category }]);
   if (error) { alert("Erreur : " + error.message); return; }
   document.getElementById('add-vehicle-form').reset();
   document.getElementById('add-vehicle-form').classList.add('hidden');
@@ -1415,9 +1710,11 @@ async function addIntervention(e, vehicleId){
 }
 
 function exportCSV(){
-  const header = ['Plaque','Modèle','Kilométrage','Statut','Disponibilité','Sortie prévue maintenance','Coût total entretien (XAF)'];
+  const header = ['Plaque','N° interne','Catégorie','Modèle','Kilométrage','Statut','Disponibilité','Sortie prévue maintenance','Coût total entretien (XAF)'];
   const rows = vehicles.map(v=>[
     v.plate,
+    fleetCode(v),
+    v.category || 'Véhicule léger',
     v.model,
     v.km,
     statusLabel(computeStatus(v)),
@@ -1439,7 +1736,7 @@ function exportCSV(){
 let importRows = [];
 
 function downloadTemplate(){
-  const csv = 'Plaque;Modèle;Kilométrage;KM dernière vidange;Intervalle entretien\nGA-1050-BL;Hilux GUN125;15000;10000;5000\n';
+  const csv = 'Plaque;Catégorie;Modèle;Kilométrage;KM dernière vidange;Intervalle entretien\nGA-1050-BL;Véhicule léger;Hilux GUN125;15000;10000;5000\n';
   const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1453,6 +1750,7 @@ function normalizeHeader(h){
 
 const HEADER_ALIASES = {
   plate: ['plaque',"plaque d'immatriculation",'plate','immatriculation'],
+  category: ['categorie','category'],
   model: ['modele','model'],
   km: ['kilometrage','km','kilometrage actuel'],
   last_service_km: ['km derniere vidange','dernier km vidange','km dernier service','kilometrage derniere vidange'],
@@ -1492,6 +1790,7 @@ function parseImportFile(){
         if (!plate || isNaN(km)) { errorCount++; return; }
         importRows.push({
           plate,
+          category: String(m.category||'').trim() || 'Véhicule léger',
           model: String(m.model||'Hilux GUN125').trim() || 'Hilux GUN125',
           km,
           last_service_km: parseInt(m.last_service_km, 10) || 0,

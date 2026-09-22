@@ -149,3 +149,12 @@ create policy "flottemine authenticated update" on storage.objects for update to
 drop policy if exists "flottemine authenticated delete" on storage.objects;
 create policy "flottemine authenticated delete" on storage.objects for delete to authenticated
   using (bucket_id in ('voice-notes','breakdown-photos','driver-photos'));
+
+-- ========== ÉVOLUTIONS — QR codes, catégories, rotation sur site ==========
+-- Véhicules : catégorie (menu déroulant extensible) + numéro interne auto-incrémenté (pour le QR code)
+alter table vehicles add column if not exists category text not null default 'Véhicule léger';
+alter table vehicles add column if not exists fleet_number bigint generated always as identity;
+
+-- Chauffeurs : code interne auto-incrémenté (pour le QR code) + durée de rotation sur site (jours)
+alter table drivers add column if not exists driver_code bigint generated always as identity;
+alter table drivers add column if not exists rotation_days integer not null default 14;
