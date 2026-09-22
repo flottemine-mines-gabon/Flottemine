@@ -223,6 +223,9 @@ Minimum version required to store current data is: `+i+`.
   <div id="config-check" class="config-warning hidden">
     ⚠ Configuration Supabase manquante : ouvre ce fichier, renseigne <code>SUPABASE_URL</code> et <code>SUPABASE_ANON_KEY</code> en haut du script, et exécute le fichier <code>flottemine-schema.sql</code> dans ton projet Supabase.
   </div>
+  <div id="cdn-load-check" class="config-warning hidden">
+    📡 Connexion internet nécessaire pour charger l'application la toute première fois sur cet appareil. Reconnecte-toi puis recharge la page — les visites suivantes fonctionneront hors ligne.
+  </div>
 
   <!-- ---- AUTH SCREEN ---- -->
   <div id="auth-screen">
@@ -496,7 +499,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
 let sb = null;
 let configured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
 if (configured) {
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { sb = null; }
+  }
+  if (!sb) {
+    // La bibliothèque Supabase (chargée depuis un CDN) n'a pas pu se charger —
+    // typiquement une toute première visite hors ligne sur cet appareil.
+    // On ne bloque pas le reste du script pour autant : les fonctions
+    // ci-dessous restent définies, seul l'accès aux données est impossible.
+    document.getElementById('cdn-load-check').classList.remove('hidden');
+  }
 } else {
   document.getElementById('config-check').classList.remove('hidden');
 }
@@ -549,11 +561,14 @@ function toggleAuthMode(){
 
 async function handleAuth(){
   if(!configured){ document.getElementById('auth-error').textContent = "Configuration Supabase manquante — voir le message ci-dessus."; return; }
+  if(!sb){ document.getElementById('auth-error').textContent = "L'application n'a pas pu se charger complètement — voir le message ci-dessus."; return; }
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
   const errorEl = document.getElementById('auth-error');
+  errorEl.style.color = '';
   errorEl.textContent = '';
   if(!email || !password){ errorEl.textContent = "Email et mot de passe requis."; return; }
+  if(!navigator.onLine){ errorEl.textContent = "Hors ligne — une connexion internet est nécessaire pour se connecter la première fois sur cet appareil."; return; }
 
   let result;
   if (authMode === 'login') {
@@ -567,25 +582,26 @@ async function handleAuth(){
     errorEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer, puis connecte-toi.";
     return;
   }
-  await onLoggedIn();
+  await onLoggedIn(result.data.user);
 }
 
 async function logout(){
   await sb.auth.signOut();
   currentUser = null;
+  try { localStorage.removeItem('fm-cached-user'); } catch(e) {}
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('locked-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('logout-btn').classList.add('hidden');
 }
 
-async function onLoggedIn(){
-  const { data } = await sb.auth.getUser();
-  currentUser = data.user;
+async function onLoggedIn(user, opts){
+  currentUser = user;
+  try { localStorage.setItem('fm-cached-user', JSON.stringify({ id: user.id, email: user.email })); } catch(e) {}
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('logout-btn').classList.remove('hidden');
 
-  const allowed = await checkSubscription();
+  const allowed = (opts && opts.offline) ? true : await checkSubscription();
   if (!allowed) {
     document.getElementById('locked-screen').classList.remove('hidden');
     return;
@@ -1944,8 +1960,30 @@ async function confirmImport(){
 (async function boot(){
   updateOfflineBanner();
   if (!configured) return;
-  const { data } = await sb.auth.getSession();
-  if (data.session) { await onLoggedIn(); }
+
+  // getSession() lit la session depuis le stockage local : ça fonctionne hors
+  // ligne tant que le jeton n'est pas totalement expiré (pas d'appel réseau
+  // nécessaire ici, contrairement à getUser()). Si sb n'a pas pu être créé
+  // (bibliothèque Supabase non chargée, ex. 1ère visite hors ligne), on ne
+  // peut pas du tout consulter le stockage de session — direction le repli
+  // sur l'identité mise en cache, s'il y en a une.
+  if (sb) {
+    const { data } = await sb.auth.getSession();
+    if (data.session) { await onLoggedIn(data.session.user); return; }
+  }
+
+  // Pas de session valide restituée (jeton vraiment expiré, appareil hors
+  // ligne depuis longtemps, ou bibliothèque Supabase indisponible hors
+  // ligne) : si on est hors ligne et qu'un compte s'est déjà connecté sur cet
+  // appareil, on rouvre quand même le tableau de bord avec les dernières
+  // données synchronisées plutôt que de bloquer sur l'écran de connexion —
+  // inutilisable sans réseau de toute façon pour une 1ère connexion.
+  if (!navigator.onLine) {
+    try {
+      const cached = JSON.parse(localStorage.getItem('fm-cached-user'));
+      if (cached && cached.id) { await onLoggedIn(cached, { offline: true }); }
+    } catch(e) {}
+  }
 })();
 </script>
 </body>
