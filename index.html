@@ -372,6 +372,7 @@ Minimum version required to store current data is: `+i+`.
         <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="import-file" accept=".csv,.xlsx,.xls"></div>
         <button class="btn btn-primary" onclick="parseImportFile()">Aperçu de l'import</button>
         <div id="import-preview" style="margin-top:14px;"></div>
+        <div id="import-batches-vehicles" style="margin-top:14px;"></div>
       </div>
 
       <form class="inline-form hidden" id="add-vehicle-form" onsubmit="addVehicle(event)">
@@ -431,6 +432,7 @@ Minimum version required to store current data is: `+i+`.
         <div class="field"><label>Fichier Excel (.xlsx/.xls) ou CSV</label><input type="file" id="driver-import-file" accept=".csv,.xlsx,.xls"></div>
         <button class="btn btn-primary" onclick="parseDriverImportFile()">Aperçu de l'import</button>
         <div id="driver-import-preview" style="margin-top:14px;"></div>
+        <div id="import-batches-drivers" style="margin-top:14px;"></div>
       </div>
 
       <form class="inline-form hidden" id="add-driver-form" onsubmit="addDriver(event)">
@@ -940,7 +942,7 @@ async function loadVehicles(){
   if (!navigator.onLine) {
     vehicles = readLocal('vehicles');
     if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
-    renderKpis(); renderList(); renderDetail();
+    renderKpis(); renderList(); renderDetail(); renderImportBatches();
     updateOfflineBanner();
     return;
   }
@@ -948,7 +950,7 @@ async function loadVehicles(){
   if (error) {
     vehicles = readLocal('vehicles');
     if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
-    renderKpis(); renderList(); renderDetail();
+    renderKpis(); renderList(); renderDetail(); renderImportBatches();
     updateOfflineBanner();
     return;
   }
@@ -962,6 +964,7 @@ async function loadVehicles(){
   renderKpis();
   renderList();
   renderDetail();
+  renderImportBatches();
   const vsel = document.getElementById('nb-vehicle');
   if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
   populateVehicleSelects();
@@ -1320,13 +1323,13 @@ function driverStatusIcon(s){ return (DRIVER_STATUS_META[s] || DRIVER_STATUS_MET
 async function loadDrivers(){
   if (!navigator.onLine) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches();
     return;
   }
   const { data, error } = await sb.from('drivers').select('*').order('full_name', { ascending: true });
   if (error) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches();
     return;
   }
   drivers = data || [];
@@ -1336,6 +1339,7 @@ async function loadDrivers(){
   renderDriverAlerts();
   renderDriverList();
   renderDriverDetail();
+  renderDriverImportBatches();
 }
 
 function daysSince(dateStr){
@@ -1720,6 +1724,7 @@ function exportDriversCSV(){
 
 /* ---- Import Excel/CSV chauffeurs ---- */
 let importDriverRows = [];
+let importDriverFileName = '';
 
 function downloadDriverTemplate(){
   const csv = 'Nom;Matricule;Téléphone;Statut;Rotation (jours);Site;Depuis le;Permis N°;Expiration permis\nJean-Pierre Ondo;CH-0042;074123456;Sur site;14;Site Moanda;2026-09-01;123456/GA;2027-03-15\n';
@@ -1782,6 +1787,7 @@ function parseDriverImportFile(){
   const preview = document.getElementById('driver-import-preview');
   if (!input.files[0]) { preview.innerHTML = '<div class="alert-box">Choisis un fichier d\'abord.</div>'; return; }
   const file = input.files[0];
+  importDriverFileName = file.name;
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -1827,12 +1833,49 @@ function parseDriverImportFile(){
 
 async function confirmDriverImport(){
   if (!importDriverRows.length) return;
-  const { error } = await sb.from('drivers').insert(importDriverRows);
+  const batchId = crypto.randomUUID();
+  const rows = importDriverRows.map(r => ({ ...r, import_batch_id: batchId, import_file_name: importDriverFileName }));
+  const { error } = await sb.from('drivers').insert(rows);
   if (error) { alert("Erreur : " + error.message); return; }
   importDriverRows = [];
   document.getElementById('driver-import-preview').innerHTML = '';
   document.getElementById('driver-import-file').value = '';
   document.getElementById('driver-import-panel').classList.add('hidden');
+  await loadDrivers();
+}
+
+/* ---- Annulation d'un import (fichier entier) ---- */
+function renderDriverImportBatches(){
+  const el = document.getElementById('import-batches-drivers');
+  if (!el) return;
+  const batches = {};
+  drivers.forEach(d => {
+    if (!d.import_batch_id) return;
+    if (!batches[d.import_batch_id]) batches[d.import_batch_id] = { fileName: d.import_file_name || 'Fichier importé', count: 0, date: d.created_at };
+    batches[d.import_batch_id].count++;
+    if (d.created_at && (!batches[d.import_batch_id].date || d.created_at < batches[d.import_batch_id].date)) batches[d.import_batch_id].date = d.created_at;
+  });
+  const ids = Object.keys(batches);
+  if (!ids.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="border-top:1px solid var(--line);padding-top:14px;">
+      <b style="font-size:13px;color:var(--ink);">Imports précédents</b>
+      ${ids.map(id => {
+        const b = batches[id];
+        const d = b.date ? new Date(b.date).toLocaleDateString('fr-FR') : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:var(--surface-2);border-radius:6px;flex-wrap:wrap;">
+          <div style="font-size:12.5px;color:var(--ink);">📄 ${b.fileName} — ${b.count} chauffeur(s)${d ? ' — ' + d : ''}</div>
+          <button class="btn-tiny danger" onclick="cancelDriverImportBatch('${id}', ${b.count})">Annuler cet import</button>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function cancelDriverImportBatch(batchId, count){
+  if (!confirm(`Annuler cet import ? ${count} chauffeur(s) importé(s) via ce fichier seront supprimés définitivement.`)) return;
+  const { error } = await sb.from('drivers').delete().eq('import_batch_id', batchId);
+  if (error) { alert("Erreur : " + error.message); return; }
   await loadDrivers();
 }
 
@@ -2603,6 +2646,7 @@ function exportCSV(){
 
 /* ---- Import Excel/CSV ---- */
 let importRows = [];
+let importFileName = '';
 
 function downloadTemplate(){
   const csv = 'Plaque;Catégorie;Modèle;Kilométrage;KM dernière vidange;Intervalle entretien\nGA-1050-BL;Véhicule léger;Hilux GUN125;15000;10000;5000\n';
@@ -2644,6 +2688,7 @@ function parseImportFile(){
   const preview = document.getElementById('import-preview');
   if (!input.files[0]) { preview.innerHTML = '<div class="alert-box">Choisis un fichier d\'abord.</div>'; return; }
   const file = input.files[0];
+  importFileName = file.name;
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -2687,12 +2732,49 @@ function parseImportFile(){
 
 async function confirmImport(){
   if (!importRows.length) return;
-  const { error } = await sb.from('vehicles').insert(importRows);
+  const batchId = crypto.randomUUID();
+  const rows = importRows.map(r => ({ ...r, import_batch_id: batchId, import_file_name: importFileName }));
+  const { error } = await sb.from('vehicles').insert(rows);
   if (error) { alert("Erreur : " + error.message); return; }
   importRows = [];
   document.getElementById('import-preview').innerHTML = '';
   document.getElementById('import-file').value = '';
   document.getElementById('import-panel').classList.add('hidden');
+  await loadVehicles();
+}
+
+/* ---- Annulation d'un import (fichier entier) ---- */
+function renderImportBatches(){
+  const el = document.getElementById('import-batches-vehicles');
+  if (!el) return;
+  const batches = {};
+  vehicles.forEach(v => {
+    if (!v.import_batch_id) return;
+    if (!batches[v.import_batch_id]) batches[v.import_batch_id] = { fileName: v.import_file_name || 'Fichier importé', count: 0, date: v.created_at };
+    batches[v.import_batch_id].count++;
+    if (v.created_at && (!batches[v.import_batch_id].date || v.created_at < batches[v.import_batch_id].date)) batches[v.import_batch_id].date = v.created_at;
+  });
+  const ids = Object.keys(batches);
+  if (!ids.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="border-top:1px solid var(--line);padding-top:14px;">
+      <b style="font-size:13px;color:var(--ink);">Imports précédents</b>
+      ${ids.map(id => {
+        const b = batches[id];
+        const d = b.date ? new Date(b.date).toLocaleDateString('fr-FR') : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:var(--surface-2);border-radius:6px;flex-wrap:wrap;">
+          <div style="font-size:12.5px;color:var(--ink);">📄 ${b.fileName} — ${b.count} véhicule(s)${d ? ' — ' + d : ''}</div>
+          <button class="btn-tiny danger" onclick="cancelImportBatch('${id}', ${b.count})">Annuler cet import</button>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function cancelImportBatch(batchId, count){
+  if (!confirm(`Annuler cet import ? ${count} véhicule(s) importé(s) via ce fichier seront supprimés définitivement.`)) return;
+  const { error } = await sb.from('vehicles').delete().eq('import_batch_id', batchId);
+  if (error) { alert("Erreur : " + error.message); return; }
   await loadVehicles();
 }
 
