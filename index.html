@@ -1856,11 +1856,10 @@ function renderDriverImportBatches(){
     if (d.created_at && (!batches[d.import_batch_id].date || d.created_at < batches[d.import_batch_id].date)) batches[d.import_batch_id].date = d.created_at;
   });
   const ids = Object.keys(batches);
-  if (!ids.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div style="border-top:1px solid var(--line);padding-top:14px;">
       <b style="font-size:13px;color:var(--ink);">Imports précédents</b>
-      ${ids.map(id => {
+      ${!ids.length ? `<div class="empty-note" style="text-align:left;padding:8px 0 0;">Aucun import de fichier effectué pour l'instant sur ce compte. Dès que vous importerez un fichier Excel/CSV, il apparaîtra ici et vous pourrez l'annuler en un clic.</div>` : ids.map(id => {
         const b = batches[id];
         const d = b.date ? new Date(b.date).toLocaleDateString('fr-FR') : '';
         return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:var(--surface-2);border-radius:6px;flex-wrap:wrap;">
@@ -2755,11 +2754,10 @@ function renderImportBatches(){
     if (v.created_at && (!batches[v.import_batch_id].date || v.created_at < batches[v.import_batch_id].date)) batches[v.import_batch_id].date = v.created_at;
   });
   const ids = Object.keys(batches);
-  if (!ids.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
     <div style="border-top:1px solid var(--line);padding-top:14px;">
       <b style="font-size:13px;color:var(--ink);">Imports précédents</b>
-      ${ids.map(id => {
+      ${!ids.length ? `<div class="empty-note" style="text-align:left;padding:8px 0 0;">Aucun import de fichier effectué pour l'instant sur ce compte. Dès que vous importerez un fichier Excel/CSV, il apparaîtra ici et vous pourrez l'annuler en un clic.</div>` : ids.map(id => {
         const b = batches[id];
         const d = b.date ? new Date(b.date).toLocaleDateString('fr-FR') : '';
         return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:var(--surface-2);border-radius:6px;flex-wrap:wrap;">
