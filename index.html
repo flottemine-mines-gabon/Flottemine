@@ -631,10 +631,11 @@ Minimum version required to store current data is: `+i+`.
         <button class="subtab-btn" id="hse-sub-btn-kpi" onclick="switchHseSub('kpi')">KPI</button>
         <button class="subtab-btn" id="hse-sub-btn-audits" onclick="switchHseSub('audits')">Audits</button>
         <button class="subtab-btn" id="hse-sub-btn-incidents" onclick="switchHseSub('incidents')">Incidents</button>
-        <button class="subtab-btn" id="hse-sub-btn-controle" onclick="switchHseSub('controle')">Contrôle véhicules</button>
+        <button class="subtab-btn" id="hse-sub-btn-controle" onclick="switchHseSub('controle')">Documents véhicules</button>
         <button class="subtab-btn" id="hse-sub-btn-formation" onclick="switchHseSub('formation')">Formation</button>
         <button class="subtab-btn" id="hse-sub-btn-ert" onclick="switchHseSub('ert')">ERT</button>
         <button class="subtab-btn" id="hse-sub-btn-urgence" onclick="switchHseSub('urgence')">Urgences</button>
+        <button class="subtab-btn" id="hse-sub-btn-heures" onclick="switchHseSub('heures')">Heures de conduite</button>
       </div>
 
       <!-- Risques -->
@@ -717,8 +718,8 @@ Minimum version required to store current data is: `+i+`.
 
       <!-- Contrôle technique véhicules -->
       <div id="hse-sub-controle" class="subpanel hidden">
-        <div class="panel-title"><h2 style="font-size:15px;">Contrôle technique de la flotte</h2></div>
-        <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Basé sur les véhicules de l'onglet Véhicules — échéance recalculée automatiquement (1 an après le dernier contrôle).</p>
+        <div class="panel-title"><h2 style="font-size:15px;">Documents véhicules</h2></div>
+        <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Contrôle technique, assurance, carte grise et vignette — basé sur les véhicules de l'onglet Véhicules. Les échéances de contrôle technique et d'assurance se recalculent automatiquement (1 an après la dernière date saisie) ; la carte grise et la vignette utilisent la date que tu indiques.</p>
         <div id="hse-controle-list"><div class="empty-note">Chargement…</div></div>
       </div>
 
@@ -787,6 +788,24 @@ Minimum version required to store current data is: `+i+`.
 
         <div class="panel-title" style="margin-top:18px;"><h2 style="font-size:15px;">Emplacement des kits de premiers secours</h2></div>
         <textarea id="hu-kits" rows="3" style="width:100%;font:inherit;font-size:13.5px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:'IBM Plex Sans';" placeholder="Ex : Atelier mécanique, poste de garde, chaque véhicule d'intervention…" onchange="saveUrgenceInfo()"></textarea>
+      </div>
+
+      <!-- Heures de conduite / repos -->
+      <div id="hse-sub-heures" class="subpanel hidden">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Heures de conduite &amp; repos</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-heures-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Ajouter une entrée</button>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Alerte automatique au-delà de 8h (à surveiller) et 10h (fatigue) de conduite dans la journée.</p>
+        <form class="inline-form hidden" id="add-heures-form" onsubmit="addHeuresConduite(event)">
+          <div class="field"><label>Chauffeur</label><select required id="hh-driver" class="driver-select"></select></div>
+          <div class="field"><label>Date</label><input required type="date" id="hh-date"></div>
+          <div class="field"><label>Heures de conduite</label><input required type="number" step="0.5" min="0" id="hh-conduite" placeholder="8"></div>
+          <div class="field"><label>Heures de repos (optionnel)</label><input type="number" step="0.5" min="0" id="hh-repos" placeholder="10"></div>
+          <div class="field"><label>Notes (optionnel)</label><input id="hh-notes" placeholder="Ex : trajet Belinga – Libreville"></div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="heures-list"><div class="empty-note">Chargement…</div></div>
       </div>
     </div>
 
@@ -886,7 +905,7 @@ function updateOfflineBanner(){
   }
 }
 window.addEventListener('offline', updateOfflineBanner);
-window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); loadHseRisques(); loadHseAudits(); loadHseIncidents(); loadHseKpi(); loadHseFormations(); loadHseErt(); loadHseContactsUrgence(); loadHseUrgenceInfo(); } });
+window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); loadHseRisques(); loadHseAudits(); loadHseIncidents(); loadHseKpi(); loadHseFormations(); loadHseErt(); loadHseContactsUrgence(); loadHseUrgenceInfo(); loadHseHeures(); } });
 
 function cacheLocal(key, data){
   try {
@@ -1103,6 +1122,7 @@ async function revealDashboard(user, opts){
   await loadHseErt();
   await loadHseContactsUrgence();
   await loadHseUrgenceInfo();
+  await loadHseHeures();
 
   // Panneau admin : visible et chargé uniquement pour le compte administrateur.
   if (currentUser && currentUser.id === ADMIN_UID) {
@@ -1126,7 +1146,7 @@ function switchTab(name){
 
 /* ---- Sécurité (HSE) : sous-onglets ---- */
 function switchHseSub(name){
-  ['risques','matrice','kpi','audits','incidents','controle','formation','ert','urgence'].forEach(t=>{
+  ['risques','matrice','kpi','audits','incidents','controle','formation','ert','urgence','heures'].forEach(t=>{
     document.getElementById('hse-sub-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('hse-sub-btn-'+t).classList.toggle('active', t===name);
   });
@@ -1179,6 +1199,8 @@ async function loadVehicles(){
   for (const v of vehicles) {
     const { data: hist } = await sb.from('interventions').select('*').eq('vehicle_id', v.id).order('date', { ascending: false });
     v.hist = hist || [];
+    const { data: fuel } = await sb.from('fuel_logs').select('*').eq('vehicle_id', v.id).order('date', { ascending: false });
+    v.fuel = fuel || [];
   }
   cacheLocal('vehicles', vehicles);
   if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
@@ -1199,6 +1221,15 @@ function populateVehicleSelects(){
     const current = sel.value;
     const opts = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('');
     sel.innerHTML = '<option value="">Aucun</option>' + opts;
+    if (current) sel.value = current;
+  });
+}
+
+function populateDriverSelects(){
+  document.querySelectorAll('select.driver-select').forEach(sel=>{
+    const current = sel.value;
+    const opts = drivers.map(d=>`<option value="${d.id}">${d.full_name}</option>`).join('');
+    sel.innerHTML = '<option value="">Sélectionner…</option>' + opts;
     if (current) sel.value = current;
   });
 }
@@ -1343,6 +1374,9 @@ function renderDetail(){
       <div class="field"><label>Coût (XAF, optionnel)</label><input type="number" id="int-cost-${v.id}" placeholder="25000"></div>
       <button class="btn btn-primary" type="submit">Enregistrer l'intervention</button>
     </form>
+
+    ${renderFuelSection(v)}
+
     <button class="btn btn-secondary" style="width:100%;margin-top:14px;color:var(--bad);border-color:#E3AFAF;" onclick="deleteVehicle('${v.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Supprimer ce véhicule</button>
   `;
   populateCategorySelects(v.category);
@@ -1546,24 +1580,26 @@ function driverStatusIcon(s){ return (DRIVER_STATUS_META[s] || DRIVER_STATUS_MET
 async function loadDrivers(){
   if (!navigator.onLine) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers(); populateDriverSelects(); renderHeuresList();
     return;
   }
   const { data, error } = await sb.from('drivers').select('*').order('full_name', { ascending: true });
   if (error) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers(); populateDriverSelects(); renderHeuresList();
     return;
   }
   drivers = data || [];
   cacheLocal('drivers', drivers);
   populateVehicleSelects();
+  populateDriverSelects();
   renderDriverKpis();
   renderDriverAlerts();
   renderDriverList();
   renderDriverDetail();
   renderDriverImportBatches();
   renderQrGalleryDrivers();
+  renderHeuresList();
 }
 
 function daysSince(dateStr){
@@ -2592,6 +2628,25 @@ async function deleteIncident(id){
 }
 
 /* ---- Contrôle technique de la flotte (réutilise `vehicles`) ---- */
+// Contrôle technique : on saisit la date du DERNIER contrôle, l'échéance
+// (+365 j) est calculée. Assurance / carte grise / vignette : on saisit
+// directement la date d'expiration inscrite sur le document.
+const VEHICLE_DOC_TYPES = [
+  { field:'controle_technique_date', label:'Contrôle technique', computed:true },
+  { field:'assurance_expiration', label:'Assurance', computed:false },
+  { field:'carte_grise_expiration', label:'Carte grise', computed:false },
+  { field:'vignette_expiration', label:'Vignette', computed:false }
+];
+function hseDocStatus(v, doc, today){
+  const raw = v[doc.field];
+  if (!raw) return { cls:'modere', label:'Non renseigné', dueTxt:'—' };
+  const dueTxt = doc.computed ? hseAddDaysISO(raw, 365) : raw;
+  const diff = Math.round((new Date(dueTxt) - new Date(today))/86400000);
+  let cls='faible', label='À jour';
+  if (diff<0){ cls='critique'; label = doc.computed ? 'En retard' : 'Expiré'; }
+  else if (diff<=30){ cls='modere'; label = doc.computed ? 'À venir' : 'À renouveler'; }
+  return { cls, label, dueTxt };
+}
 function renderHseControle(){
   const el = document.getElementById('hse-controle-list');
   if (!el) return;
@@ -2599,31 +2654,25 @@ function renderHseControle(){
   const today = new Date().toISOString().slice(0,10);
   el.innerHTML = '';
   vehicles.forEach(v=>{
-    let cls='faible', label='À jour', nextTxt='—';
-    if (v.controle_technique_date){
-      nextTxt = hseAddDaysISO(v.controle_technique_date, 365);
-      const diff = Math.round((new Date(nextTxt) - new Date(today))/86400000);
-      if (diff<0){ cls='critique'; label='En retard'; } else if (diff<=30){ cls='modere'; label='À venir'; }
-    } else { cls='modere'; label='Non renseigné'; }
     const div = document.createElement('div');
     div.className = 'bd-item';
-    div.innerHTML = `
-      <div class="bd-top">
-        <b>${hseEsc(v.plate)} — ${hseEsc(v.model)}</b>
-        <span class="prio ${cls}">${label}</span>
-      </div>
-      <div class="bstatus" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span>Dernier contrôle : <input type="date" value="${v.controle_technique_date||''}" onchange="saveControleTechnique('${v.id}', this.value)"></span>
-        <span>Prochain : ${nextTxt}</span>
-      </div>`;
+    const rows = VEHICLE_DOC_TYPES.map(doc=>{
+      const st = hseDocStatus(v, doc, today);
+      const dueNote = doc.computed && v[doc.field] ? ` <span class="qr-sub">(échéance ${st.dueTxt})</span>` : '';
+      return `<div class="row"><span class="k">${doc.label}</span><span class="v" style="display:inline-flex;gap:8px;align-items:center;">
+        <input type="date" value="${v[doc.field]||''}" onchange="saveVehicleDoc('${v.id}','${doc.field}',this.value)">
+        <span class="prio ${st.cls}">${st.label}</span>${dueNote}
+      </span></div>`;
+    }).join('');
+    div.innerHTML = `<div class="bd-top"><b>${hseEsc(v.plate)} — ${hseEsc(v.model)}</b></div>${rows}`;
     el.appendChild(div);
   });
 }
-async function saveControleTechnique(vehicleId, dateVal){
-  const { error } = await sb.from('vehicles').update({ controle_technique_date: dateVal || null }).eq('id', vehicleId);
+async function saveVehicleDoc(vehicleId, field, dateVal){
+  const { error } = await sb.from('vehicles').update({ [field]: dateVal || null }).eq('id', vehicleId);
   if (error) { alert("Erreur : " + error.message); return; }
   const v = vehicles.find(x=>x.id===vehicleId);
-  if (v) v.controle_technique_date = dateVal || null;
+  if (v) v[field] = dateVal || null;
   renderHseControle();
 }
 
@@ -2823,6 +2872,65 @@ async function saveUrgenceInfo(){
     hseUrgenceInfo = Object.assign({}, hseUrgenceInfo, payload);
   }
   cacheLocal('hse_urgence_info_obj', [hseUrgenceInfo]);
+}
+
+/* ---- Heures de conduite / repos ---- */
+let hseHeures = [];
+async function loadHseHeures(){
+  if (!navigator.onLine) { hseHeures = readLocal('driving_hours_logs'); renderHeuresList(); return; }
+  const { data, error } = await sb.from('driving_hours_logs').select('*').order('date', { ascending: false });
+  if (error) { hseHeures = readLocal('driving_hours_logs'); renderHeuresList(); return; }
+  hseHeures = data || [];
+  cacheLocal('driving_hours_logs', hseHeures);
+  renderHeuresList();
+}
+function driverNameById(id){ const d = drivers.find(x=>x.id===id); return d ? d.full_name : 'Chauffeur supprimé'; }
+function renderHeuresList(){
+  const el = document.getElementById('heures-list');
+  if (!el) return;
+  if (!hseHeures.length){ el.innerHTML = '<div class="empty-note">Aucune entrée enregistrée.</div>'; return; }
+  el.innerHTML = '';
+  hseHeures.forEach(h=>{
+    let cls='faible', label='Normal';
+    if (h.heures_conduite >= 10){ cls='critique'; label='Alerte fatigue'; }
+    else if (h.heures_conduite >= 8){ cls='modere'; label='À surveiller'; }
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(driverNameById(h.driver_id))} — ${h.date}</b>
+        <span class="prio ${cls}">${label}</span>
+      </div>
+      <div class="bstatus">${h.heures_conduite} h de conduite${h.heures_repos!=null ? ' · '+h.heures_repos+' h de repos' : ''}</div>
+      ${h.notes ? `<div class="bd-desc">${hseEsc(h.notes)}</div>` : ''}
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteHeuresConduite('${h.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addHeuresConduite(e){
+  e.preventDefault();
+  const driverId = document.getElementById('hh-driver').value;
+  if (!driverId) { alert("Sélectionne un chauffeur."); return; }
+  const payload = {
+    driver_id: driverId,
+    date: document.getElementById('hh-date').value,
+    heures_conduite: parseFloat(document.getElementById('hh-conduite').value),
+    heures_repos: document.getElementById('hh-repos').value ? parseFloat(document.getElementById('hh-repos').value) : null,
+    notes: document.getElementById('hh-notes').value.trim()
+  };
+  const { error } = await sb.from('driving_hours_logs').insert([payload]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-heures-form').reset();
+  document.getElementById('add-heures-form').classList.add('hidden');
+  await loadHseHeures();
+}
+async function deleteHeuresConduite(id){
+  if (!confirm("Supprimer cette entrée ?")) return;
+  const { error } = await sb.from('driving_hours_logs').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseHeures();
 }
 
 /* ==========================================================
@@ -3327,6 +3435,78 @@ async function updateIntervention(e, id, vehicleId){
 async function deleteIntervention(id, vehicleId){
   if (!confirm("Supprimer cette intervention ?")) return;
   const { error } = await sb.from('interventions').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
+}
+
+/* ---- Carburant (avec détection d'anomalie de consommation) ---- */
+function computeFuelStats(fuelAsc){
+  const withConso = [];
+  for (let i=1; i<fuelAsc.length; i++){
+    const dist = fuelAsc[i].km - fuelAsc[i-1].km;
+    if (dist > 0){
+      withConso.push({ id: fuelAsc[i].id, conso: fuelAsc[i].litres / dist * 100, dist });
+    }
+  }
+  const avg = withConso.length ? withConso.reduce((s,x)=>s+x.conso,0) / withConso.length : null;
+  return { withConso, avg };
+}
+function renderFuelSection(v){
+  const fuel = v.fuel || [];
+  const asc = fuel.slice().sort((a,b)=> a.date===b.date ? a.km-b.km : (a.date<b.date?-1:1));
+  const { withConso, avg } = computeFuelStats(asc);
+  const consoMap = {}; withConso.forEach(c=>{ consoMap[c.id] = c; });
+  const totalCost = fuel.reduce((s,f)=>s+(Number(f.cost)||0), 0);
+
+  const rows = fuel.length ? fuel.map(f=>{
+    const c = consoMap[f.id];
+    let badge = '';
+    if (c){
+      const isAnomaly = avg && c.conso > avg * 1.3;
+      badge = ` · <span class="prio ${isAnomaly?'critique':'faible'}">${c.conso.toFixed(1)} L/100km${isAnomaly?' — anomalie possible':''}</span>`;
+    }
+    return `<div class="hist-item">
+        <div class="hist-dot"></div>
+        <div class="hist-date">${f.date}</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+            <span>${Number(f.km).toLocaleString('fr-FR')} km — ${f.litres} L${f.cost ? ' — ' + Number(f.cost).toLocaleString('fr-FR') + ' XAF' : ''}${badge}</span>
+            <button class="btn-tiny danger" onclick="deleteFuelLog('${f.id}','${v.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+          </div>
+          ${f.notes ? `<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">${hseEsc(f.notes)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('') : '<div class="empty-note" style="padding:8px 0;">Aucun plein enregistré.</div>';
+
+  return `
+    <div>
+      <div class="row" style="border:none;padding-bottom:2px;"><span class="k" style="font-weight:600;">Carburant</span><span class="v">${totalCost ? totalCost.toLocaleString('fr-FR') + ' XAF au total' : ''}</span></div>
+      ${rows}
+    </div>
+    <form class="inline-form" onsubmit="addFuelLog(event, '${v.id}')">
+      <div class="field"><label>Date du plein</label><input required type="date" id="fl-date-${v.id}"></div>
+      <div class="field"><label>Kilométrage</label><input required type="number" id="fl-km-${v.id}" value="${v.km}"></div>
+      <div class="field"><label>Litres</label><input required type="number" step="0.1" id="fl-litres-${v.id}" placeholder="60"></div>
+      <div class="field"><label>Coût (XAF, optionnel)</label><input type="number" id="fl-cost-${v.id}" placeholder="45000"></div>
+      <button class="btn btn-primary" type="submit">Enregistrer le plein</button>
+    </form>`;
+}
+async function addFuelLog(e, vehicleId){
+  e.preventDefault();
+  const payload = {
+    vehicle_id: vehicleId,
+    date: document.getElementById(`fl-date-${vehicleId}`).value,
+    km: parseInt(document.getElementById(`fl-km-${vehicleId}`).value, 10),
+    litres: parseFloat(document.getElementById(`fl-litres-${vehicleId}`).value),
+    cost: document.getElementById(`fl-cost-${vehicleId}`).value ? parseFloat(document.getElementById(`fl-cost-${vehicleId}`).value) : null
+  };
+  const { error } = await sb.from('fuel_logs').insert([payload]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadVehicles();
+}
+async function deleteFuelLog(id, vehicleId){
+  if (!confirm("Supprimer ce plein ?")) return;
+  const { error } = await sb.from('fuel_logs').delete().eq('id', id);
   if (error) { alert("Erreur : " + error.message); return; }
   await loadVehicles();
 }
