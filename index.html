@@ -264,16 +264,12 @@ Minimum version required to store current data is: `+i+`.
   .qr-label{text-align:center;}
   .qr-label b{display:block;font-family:'Space Grotesk';font-size:15px;letter-spacing:0.02em;}
   .qr-label span{display:block;font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono';margin-top:2px;}
-
-  /* ---- Scanner ---- */
-  .scan-wrap{max-width:480px;margin:0 auto;text-align:center;}
-  .scan-video-box{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:1/1;max-width:360px;margin:0 auto;border:1px solid var(--line-strong);}
-  .scan-video-box video{width:100%;height:100%;object-fit:cover;}
-  .scan-frame{position:absolute;inset:12%;border:2px solid var(--yellow);border-radius:12px;pointer-events:none;}
-  #scan-status{color:var(--ink-soft);font-size:13px;margin-top:12px;font-family:'IBM Plex Sans';}
-  .scan-result{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:16px;margin-top:16px;text-align:left;}
-  .scan-manual{display:flex;gap:8px;margin-top:16px;}
-  .scan-manual input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;background:var(--surface-2);color:var(--ink);font-family:'IBM Plex Sans';}
+  .qr-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+  .qr-card{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+  .qr-card canvas{width:140px;height:140px;border-radius:6px;background:#fff;padding:8px;}
+  .qr-card b{font-family:'IBM Plex Mono';font-size:13px;word-break:break-word;}
+  .qr-card .qr-sub{font-size:11px;color:var(--ink-soft);font-family:'IBM Plex Sans';}
+  .qr-card-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
 
   /* ---- Offline banner ---- */
   #offline-banner{display:none;background:var(--yellow);color:#0F2A1C;text-align:center;padding:9px 16px;font-size:12.8px;font-weight:600;font-family:'IBM Plex Sans';}
@@ -356,7 +352,7 @@ Minimum version required to store current data is: `+i+`.
     <div class="tabs">
       <button class="tab-btn active" id="tab-btn-vehicles" onclick="switchTab('vehicles')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Véhicules</button>
       <button class="tab-btn" id="tab-btn-drivers" onclick="switchTab('drivers')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Chauffeurs</button>
-      <button class="tab-btn" id="tab-btn-scan" onclick="switchTab('scan')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>Scanner</button>
+      <button class="tab-btn" id="tab-btn-scan" onclick="switchTab('scan')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg>QR codes</button>
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
       <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="6" width="3" height="12"/></svg>Tableau de bord</button>
@@ -502,27 +498,19 @@ Minimum version required to store current data is: `+i+`.
     <!-- ===== ONGLET SCANNER ===== -->
     <div id="tab-scan" class="tab-panel hidden">
       <div class="panel-title">
-        <h2><span class="section-icon acc-scan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg></span>Scanner un badge chauffeur ou véhicule</h2>
+        <h2><span class="section-icon acc-scan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="4" height="4" rx="0.5"/><rect x="13" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="13" width="4" height="4" rx="0.5"/><path d="M14 14h2.5v2.5"/><path d="M17 17h.01"/></svg></span>QR codes badges</h2>
       </div>
-      <div class="scan-wrap">
-        <div class="scan-video-box">
-          <video id="scan-video" playsinline muted></video>
-          <div class="scan-frame"></div>
-        </div>
-        <canvas id="scan-canvas" class="hidden"></canvas>
-        <div style="margin-top:14px;">
-          <button class="btn btn-primary" id="scan-start-btn" onclick="startScan()">📷 Démarrer le scan</button>
-          <button class="btn btn-secondary hidden" id="scan-stop-btn" onclick="stopScan()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Arrêter</button>
-        </div>
-        <div id="scan-status">Appuie sur "Démarrer le scan" et vise le QR code du badge.</div>
+      <p style="margin:0 0 12px;font-size:13px;color:var(--ink-soft);font-family:'IBM Plex Sans';">Un QR code est généré automatiquement pour chaque véhicule et chaque chauffeur enregistré. Scanne-le avec l'appareil photo de n'importe quel téléphone (pas besoin d'app) pour voir la fiche à jour, ou télécharge le badge à imprimer.</p>
 
-        <div class="scan-manual">
-          <input type="text" id="scan-manual-input" placeholder="Ou saisis un matricule / une plaque…">
-          <button class="btn btn-secondary" onclick="manualScanLookup()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Rechercher</button>
-        </div>
-
-        <div id="scan-result"></div>
+      <div class="panel-title" style="margin-top:8px;">
+        <h2 style="font-size:15px;">QR codes des véhicules</h2>
       </div>
+      <div class="qr-gallery" id="qr-gallery-vehicles"><div class="empty-note">Chargement…</div></div>
+
+      <div class="panel-title" style="margin-top:24px;">
+        <h2 style="font-size:15px;">QR codes des chauffeurs</h2>
+      </div>
+      <div class="qr-gallery" id="qr-gallery-drivers"><div class="empty-note">Chargement…</div></div>
     </div>
 
     <!-- ===== ONGLET PANNES ===== -->
@@ -1053,7 +1041,6 @@ async function revealDashboard(user, opts){
 
 /* ---- Tabs ---- */
 function switchTab(name){
-  if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
   ['vehicles','drivers','scan','breakdowns','parts','stats','hse','admin'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
@@ -1102,7 +1089,7 @@ async function loadVehicles(){
   if (!navigator.onLine) {
     vehicles = readLocal('vehicles');
     if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
-    renderKpis(); renderList(); renderDetail(); renderImportBatches();
+    renderKpis(); renderList(); renderDetail(); renderImportBatches(); renderQrGalleryVehicles();
     updateOfflineBanner();
     return;
   }
@@ -1110,7 +1097,7 @@ async function loadVehicles(){
   if (error) {
     vehicles = readLocal('vehicles');
     if (vehicles.length && !selectedId) selectedId = vehicles[0].id;
-    renderKpis(); renderList(); renderDetail(); renderImportBatches();
+    renderKpis(); renderList(); renderDetail(); renderImportBatches(); renderQrGalleryVehicles();
     updateOfflineBanner();
     return;
   }
@@ -1130,6 +1117,7 @@ async function loadVehicles(){
   populateVehicleSelects();
   populateCategorySelects();
   renderHseControle();
+  renderQrGalleryVehicles();
 }
 
 function populateVehicleSelects(){
@@ -1484,13 +1472,13 @@ function driverStatusIcon(s){ return (DRIVER_STATUS_META[s] || DRIVER_STATUS_MET
 async function loadDrivers(){
   if (!navigator.onLine) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers();
     return;
   }
   const { data, error } = await sb.from('drivers').select('*').order('full_name', { ascending: true });
   if (error) {
     drivers = readLocal('drivers');
-    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches();
+    renderDriverKpis(); renderDriverAlerts(); renderDriverList(); renderDriverDetail(); renderDriverImportBatches(); renderQrGalleryDrivers();
     return;
   }
   drivers = data || [];
@@ -1501,6 +1489,7 @@ async function loadDrivers(){
   renderDriverList();
   renderDriverDetail();
   renderDriverImportBatches();
+  renderQrGalleryDrivers();
 }
 
 function daysSince(dateStr){
@@ -2039,167 +2028,54 @@ async function cancelDriverImportBatch(batchId, count){
   await loadDrivers();
 }
 
-/* ---- Scanner QR (chauffeurs & véhicules) ---- */
-let scanStream = null;
-let scanRAF = null;
-let scanTimeout = null;
-let scanStarting = false;
-const SCAN_INTERVAL_MS = 120; // ~8 lectures/seconde — largement suffisant, économise le CPU/la batterie
-
-async function startScan(){
-  const video = document.getElementById('scan-video');
-  const status = document.getElementById('scan-status');
-  if (scanStarting || scanStream) return; // évite un double démarrage (double-tap)
-  if (typeof jsQR === 'undefined') { status.textContent = "Le lecteur QR n'a pas pu se charger. Recharge la page."; return; }
-  if (!window.isSecureContext) { status.textContent = "La caméra nécessite une connexion sécurisée (https://)."; return; }
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { status.textContent = "Caméra non supportée par ce navigateur."; return; }
-
-  scanStarting = true;
-  status.textContent = 'Ouverture de la caméra…';
-  try {
-    scanStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 720 } }
-    });
-  } catch(err) {
-    scanStarting = false;
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      status.textContent = "Accès caméra refusé — autorise la caméra dans les réglages du navigateur pour ce site.";
-    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-      status.textContent = "Aucune caméra détectée sur cet appareil.";
-    } else if (err.name === 'NotReadableError') {
-      status.textContent = "La caméra est déjà utilisée par une autre application.";
-    } else {
-      status.textContent = "Caméra non accessible : " + err.message;
-    }
-    return;
-  }
-  scanStarting = false;
-  video.srcObject = scanStream;
-  try { await video.play(); } catch(e) {}
-  document.getElementById('scan-start-btn').classList.add('hidden');
-  document.getElementById('scan-stop-btn').classList.remove('hidden');
-  status.textContent = 'Scan en cours… vise le QR code du badge.';
-  document.getElementById('scan-result').innerHTML = '';
-  scanLoop();
+/* ---- QR codes (chauffeurs & véhicules) ----
+   Un QR par véhicule/chauffeur est généré automatiquement dès que la liste
+   est chargée (donc dès l'ajout d'une fiche) — il encode une URL publique
+   vers voir-badge.html, lisible par l'appareil photo natif de n'importe
+   quel téléphone : plus besoin d'un scanner caméra dans l'app elle-même. */
+function renderQrGalleryVehicles(){
+  const el = document.getElementById('qr-gallery-vehicles');
+  if (!el) return;
+  if (!vehicles.length){ el.innerHTML = '<div class="empty-note">Aucun véhicule enregistré.</div>'; return; }
+  el.innerHTML = vehicles.map(v => `
+    <div class="qr-card">
+      <canvas id="qrgal-vehicle-${v.id}"></canvas>
+      <b>${hseEsc(v.plate)}</b>
+      <span class="qr-sub">${hseEsc(fleetCode(v))} · ${hseEsc(v.model)}</span>
+      <div class="qr-card-actions">
+        <button class="btn-tiny" onclick="downloadQr('qrgal-vehicle-${v.id}','badge-${v.plate}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Badge</button>
+        <button class="btn-tiny" onclick="goToVehicle('${v.id}')">Voir la fiche</button>
+      </div>
+    </div>`).join('');
+  vehicles.forEach(v => renderQrToCanvas(
+    document.getElementById(`qrgal-vehicle-${v.id}`),
+    `${APP_BASE_URL}voir-badge.html?type=vehicle&code=${encodeURIComponent(v.plate)}`,
+    { title: v.plate, subtitle: fleetCode(v), kind: 'vehicle' }
+  ));
 }
-
-function stopScan(){
-  if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
-  if (scanTimeout) { clearTimeout(scanTimeout); scanTimeout = null; }
-  if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
-  const video = document.getElementById('scan-video');
-  if (video) video.srcObject = null;
-  document.getElementById('scan-start-btn')?.classList.remove('hidden');
-  document.getElementById('scan-stop-btn')?.classList.add('hidden');
-}
-
-function scanLoop(){
-  const video = document.getElementById('scan-video');
-  const canvas = document.getElementById('scan-canvas');
-  if (!video || !scanStream) return;
-  if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
-    // On n'analyse qu'un carré central (zone visée par le cadre à l'écran) :
-    // plus rapide à traiter et ça évite de capter un QR code hors-cadre.
-    const vw = video.videoWidth, vh = video.videoHeight;
-    const side = Math.round(Math.min(vw, vh) * 0.85);
-    const sx = Math.round((vw - side) / 2), sy = Math.round((vh - side) / 2);
-    canvas.width = side; canvas.height = side;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(video, sx, sy, side, side, 0, 0, side, side);
-    const imageData = ctx.getImageData(0, 0, side, side);
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
-    if (code && code.data) {
-      handleScanResult(code.data);
-      stopScan();
-      return;
-    }
-  }
-  scanTimeout = setTimeout(() => { scanRAF = requestAnimationFrame(scanLoop); }, SCAN_INTERVAL_MS);
-}
-
-function handleScanResult(text){
-  // Ancien format (badges déjà imprimés avant la version "URL publique") : JSON brut.
-  let parsed = null;
-  try { parsed = JSON.parse(text); } catch(e) {}
-  if (parsed && parsed.type === 'vehicle' && parsed.plate) { manualLookupText(parsed.plate); return; }
-  if (parsed && parsed.type === 'driver' && parsed.matricule) { manualLookupText(parsed.matricule); return; }
-  // Nouveau format : une URL vers voir-badge.html?type=...&code=...
-  try {
-    const url = new URL(text);
-    const code = url.searchParams.get('code');
-    if (code) { manualLookupText(code); return; }
-  } catch(e) {}
-  manualLookupText(text);
-}
-
-function manualScanLookup(){
-  const text = document.getElementById('scan-manual-input').value.trim();
-  if (!text) return;
-  manualLookupText(text);
-}
-
-function looseNorm(s){ return String(s||'').toLowerCase().replace(/[\s-]/g,''); }
-
-function manualLookupText(text){
-  const norm = looseNorm(text);
-  if (!norm) return;
-  // Correspondance exacte d'abord (plaque, matricule ou numéro interne, espaces/tirets ignorés)…
-  let v = vehicles.find(x => looseNorm(x.plate) === norm || looseNorm(fleetCode(x)) === norm);
-  let d = !v ? drivers.find(x => looseNorm(x.matricule) === norm || looseNorm(driverCode(x)) === norm) : null;
-  // …sinon correspondance partielle (utile si on ne tape qu'un bout de la plaque/du matricule)
-  if (!v && !d) v = vehicles.find(x => looseNorm(x.plate).includes(norm) || looseNorm(fleetCode(x)).includes(norm));
-  if (!v && !d) d = drivers.find(x => looseNorm(x.matricule).includes(norm) || looseNorm(driverCode(x)).includes(norm));
-  if (v) { renderScanResultVehicle(v.id); return; }
-  if (d) { renderScanResultDriver(d.id); return; }
-  document.getElementById('scan-status').textContent = `Aucun résultat pour "${text}".`;
-  document.getElementById('scan-result').innerHTML = '';
+function renderQrGalleryDrivers(){
+  const el = document.getElementById('qr-gallery-drivers');
+  if (!el) return;
+  if (!drivers.length){ el.innerHTML = '<div class="empty-note">Aucun chauffeur enregistré.</div>'; return; }
+  el.innerHTML = drivers.map(d => `
+    <div class="qr-card">
+      <canvas id="qrgal-driver-${d.id}"></canvas>
+      <b>${hseEsc(d.full_name)}</b>
+      <span class="qr-sub">${hseEsc(d.matricule || driverCode(d))}</span>
+      <div class="qr-card-actions">
+        <button class="btn-tiny" onclick="downloadQr('qrgal-driver-${d.id}','badge-${d.matricule || driverCode(d)}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Badge</button>
+        <button class="btn-tiny" onclick="goToDriver('${d.id}')">Voir la fiche</button>
+      </div>
+    </div>`).join('');
+  drivers.forEach(d => renderQrToCanvas(
+    document.getElementById(`qrgal-driver-${d.id}`),
+    `${APP_BASE_URL}voir-badge.html?type=driver&code=${encodeURIComponent(d.matricule || driverCode(d))}`,
+    { title: d.full_name, subtitle: d.matricule || driverCode(d), kind: 'driver' }
+  ));
 }
 
 function goToVehicle(id){ switchTab('vehicles'); selectedId = id; renderList(); renderDetail(); }
 function goToDriver(id){ switchTab('drivers'); selectDriver(id); }
-
-function renderScanResultVehicle(id){
-  const v = vehicles.find(x=>x.id===id);
-  const el = document.getElementById('scan-result');
-  document.getElementById('scan-status').textContent = 'Véhicule trouvé.';
-  if (!v) { el.innerHTML = `<div class="alert-box">Ce véhicule n'existe plus dans le système.</div>`; return; }
-  const s = computeStatus(v);
-  el.innerHTML = `
-    <div class="scan-result">
-      <div class="veh-top"><b>${v.plate}</b><span class="status ${s}">${statusIcon(s)}${statusLabel(s)}</span></div>
-      <div class="veh-meta"><span class="fleet-code">${fleetCode(v)}</span> · <span class="category-badge">${v.category||'Véhicule léger'}</span> · ${v.model}</div>
-      <div class="veh-meta">${nextText(v)}</div>
-      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="goToVehicle('${v.id}')">Voir la fiche complète<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
-    </div>`;
-}
-
-function renderScanResultDriver(id){
-  const d = drivers.find(x=>x.id===id);
-  const el = document.getElementById('scan-result');
-  document.getElementById('scan-status').textContent = 'Chauffeur trouvé.';
-  if (!d) { el.innerHTML = `<div class="alert-box">Ce chauffeur n'existe plus dans le système.</div>`; return; }
-  el.innerHTML = `
-    <div class="scan-result">
-      <div class="driver-top"><b>${d.full_name}</b><span class="status ${driverStatusBadge(d.status)}">${driverStatusIcon(d.status)}${driverStatusLabel(d.status)}</span></div>
-      <div class="driver-meta">${d.matricule || driverCode(d)}</div>
-
-      <div class="row"><span class="k">Statut</span><span class="v" style="display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;">${driverStatusIcon(d.status)}${driverStatusLabel(d.status)}</span></div>
-      <div class="row"><span class="k">Depuis le</span><span class="v">${d.status_since || '—'} (${daysSince(d.status_since)} j)</span></div>
-      ${d.status === 'sur_site' ? `<div class="row"><span class="k">Durée de rotation</span><span class="v">${d.rotation_days||14} jours</span></div>
-      <div class="row"><span class="k">Jours restants avant sortie</span><span class="v">${(() => { const r = daysRemainingOnSite(d); return r < 0 ? `Dépassé de ${Math.abs(r)} j` : `${r} j`; })()}</span></div>` : ''}
-      ${d.status === 'libreville' ? (() => { const info = librevilleInfo(d); return `
-      <div class="row"><span class="k">Phase actuelle</span><span class="v">${info.label}</span></div>
-      <div class="row"><span class="k">Jours restants dans cette phase</span><span class="v">${info.overdue > 0 ? `Séjour dépassé de ${info.overdue} j` : `${info.daysRemainingInPhase} j`}</span></div>
-      `; })() : ''}
-      <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
-      <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
-      <div class="row"><span class="k">Véhicule assigné</span><span class="v">${vehiclePlateOrNone(d.vehicle_id)}</span></div>
-      <div class="row"><span class="k">N° de permis</span><span class="v">${d.license_number || '—'}</span></div>
-      <div class="row"><span class="k">Expiration permis</span><span class="v">${d.license_expiry || '—'}</span></div>
-
-      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="goToDriver('${d.id}')">Voir la fiche complète<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
-    </div>`;
-}
 
 /* ---- Pannes (breakdowns) ---- */
 let breakdowns = [];
