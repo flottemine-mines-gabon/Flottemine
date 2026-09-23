@@ -54,8 +54,6 @@ Minimum version required to store current data is: `+i+`.
   header{background:var(--surface);color:var(--ink);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
   .brand{display:flex;align-items:center;gap:12px;}
   .brand-mark{width:38px;height:38px;border-radius:7px;background:var(--yellow);display:flex;align-items:center;justify-content:center;}
-  .brand-mark svg circle{fill:#0F2A1C;}
-  .brand-mark svg path{fill:#0F2A1C;}
   .brand h1{margin:0;font-size:19px;}
   .brand span{display:block;font-family:'IBM Plex Sans';font-size:11.5px;color:var(--ink-soft);margin-top:2px;letter-spacing:0.01em;}
   .logout{background:transparent;border:1px solid var(--line);color:var(--ink-soft);padding:7px 14px;border-radius:6px;font-size:12.5px;cursor:pointer;font-family:'IBM Plex Sans';}
@@ -280,7 +278,7 @@ Minimum version required to store current data is: `+i+`.
 <header>
   <div class="brand">
     <div class="brand-mark">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C7 2 3 6 3 11c0 6.5 9 11 9 11s9-4.5 9-11c0-5-4-9-9-9z" fill="#0F2A1C"/><circle cx="12" cy="10.5" r="3.6" fill="#0F2A1C"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24"><path d="M1.44 14.64L1.44 10.8L11.04 10.8L11.04 6.24L16.32 6.24L20.16 10.8L22.56 10.8L22.56 14.64Z" fill="#0F2A1C"/><circle cx="6" cy="14.64" r="3.12" fill="#0F2A1C"/><circle cx="18" cy="14.64" r="3.12" fill="#0F2A1C"/><circle cx="6" cy="14.64" r="1.25" fill="#FFB800"/><circle cx="18" cy="14.64" r="1.25" fill="#FFB800"/></svg>
     </div>
     <div>
       <h1>FlotteMine</h1>
@@ -1419,22 +1417,41 @@ function roundRectPath(ctx, x, y, w, h, r){
 
 // Insère le sigle FlotteMine au centre du QR (sûr avec errorCorrectionLevel 'H',
 // qui tolère jusqu'à ~30% d'occultation — le logo n'en couvre qu'environ 5%).
+// Silhouette du pick-up FlotteMine, réutilisée partout où la marque doit
+// apparaître en Canvas (QR codes, badges imprimables).
+const TRUCK_BODY = [[-44,20],[-44,4],[-4,4],[-4,-15],[18,-15],[34,4],[44,4],[44,20]];
+const TRUCK_WHEELS = [[-25,20],[25,20]];
+const TRUCK_WHEEL_R = 13, TRUCK_HUB_R = 5.2;
+const TRUCK_BBOX = { minx:-44, maxx:44, miny:-15, maxy:33 };
+function drawTruckGlyph(ctx, cx, cy, targetSize, bodyColor, hubColor){
+  const bw = TRUCK_BBOX.maxx - TRUCK_BBOX.minx, bh = TRUCK_BBOX.maxy - TRUCK_BBOX.miny;
+  const u = targetSize / Math.max(bw, bh);
+  const ox = cx - (TRUCK_BBOX.minx + TRUCK_BBOX.maxx) / 2 * u;
+  const oy = cy - (TRUCK_BBOX.miny + TRUCK_BBOX.maxy) / 2 * u;
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  TRUCK_BODY.forEach(([x,y], i)=>{ const px=ox+x*u, py=oy+y*u; i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py); });
+  ctx.closePath();
+  ctx.fill();
+  TRUCK_WHEELS.forEach(([wx,wy])=>{
+    const px = ox + wx*u, py = oy + wy*u;
+    ctx.beginPath(); ctx.arc(px, py, TRUCK_WHEEL_R*u, 0, Math.PI*2); ctx.fillStyle = bodyColor; ctx.fill();
+    if (hubColor){ ctx.beginPath(); ctx.arc(px, py, TRUCK_HUB_R*u, 0, Math.PI*2); ctx.fillStyle = hubColor; ctx.fill(); }
+  });
+}
 function drawBrandMarkOnQr(canvas){
   const ctx = canvas.getContext('2d');
   const size = canvas.width;
-  const logo = Math.round(size * 0.2);
+  const logo = Math.round(size * 0.22);
   const cx = size / 2, cy = size / 2;
-  const pad = Math.round(logo * 0.16);
+  const pad = Math.round(logo * 0.22);
   ctx.fillStyle = '#FFFFFF';
   roundRectPath(ctx, cx - logo/2 - pad, cy - logo/2 - pad, logo + pad*2, logo + pad*2, pad);
   ctx.fill();
   ctx.fillStyle = '#FFB800';
   roundRectPath(ctx, cx - logo/2, cy - logo/2, logo, logo, Math.round(logo*0.22));
   ctx.fill();
-  ctx.fillStyle = '#0F2A1C';
-  ctx.beginPath();
-  ctx.arc(cx, cy, logo * 0.24, 0, Math.PI * 2);
-  ctx.fill();
+  drawTruckGlyph(ctx, cx, cy, logo * 0.72, '#0F2A1C', '#FFB800');
 }
 
 async function renderQrToCanvas(canvasEl, text, meta){
@@ -1475,10 +1492,7 @@ async function buildBadgeCanvas(qrText, title, subtitle, kind){
   ctx.fillStyle = '#FFFFFF';
   roundRectPath(ctx, bx, by, bs, bs, 10);
   ctx.fill();
-  ctx.fillStyle = '#0F2A1C';
-  ctx.beginPath();
-  ctx.arc(bx + bs/2, by + bs/2, bs * 0.2, 0, Math.PI * 2);
-  ctx.fill();
+  drawTruckGlyph(ctx, bx + bs/2, by + bs/2, bs * 0.7, '#0F2A1C', '#FFB800');
 
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#0F2A1C';
