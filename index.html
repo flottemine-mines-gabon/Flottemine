@@ -632,6 +632,9 @@ Minimum version required to store current data is: `+i+`.
         <button class="subtab-btn" id="hse-sub-btn-audits" onclick="switchHseSub('audits')">Audits</button>
         <button class="subtab-btn" id="hse-sub-btn-incidents" onclick="switchHseSub('incidents')">Incidents</button>
         <button class="subtab-btn" id="hse-sub-btn-controle" onclick="switchHseSub('controle')">Contrôle véhicules</button>
+        <button class="subtab-btn" id="hse-sub-btn-formation" onclick="switchHseSub('formation')">Formation</button>
+        <button class="subtab-btn" id="hse-sub-btn-ert" onclick="switchHseSub('ert')">ERT</button>
+        <button class="subtab-btn" id="hse-sub-btn-urgence" onclick="switchHseSub('urgence')">Urgences</button>
       </div>
 
       <!-- Risques -->
@@ -717,6 +720,73 @@ Minimum version required to store current data is: `+i+`.
         <div class="panel-title"><h2 style="font-size:15px;">Contrôle technique de la flotte</h2></div>
         <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Basé sur les véhicules de l'onglet Véhicules — échéance recalculée automatiquement (1 an après le dernier contrôle).</p>
         <div id="hse-controle-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- Formation du personnel -->
+      <div id="hse-sub-formation" class="subpanel hidden">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Formation du personnel</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-formation-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Ajouter une formation</button>
+        </div>
+        <form class="inline-form hidden" id="add-formation-form" onsubmit="addFormation(event)">
+          <div class="field"><label>Personne</label><input required id="hf-personne" placeholder="Ex : Obame Steve"></div>
+          <div class="field"><label>Poste</label>
+            <select id="hf-poste">
+              <option>Chauffeur</option>
+              <option>Mécanicien</option>
+              <option>Agent HSE</option>
+              <option>Encadrement</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="field"><label>Type de formation</label><input required id="hf-type" placeholder="Ex : Premiers secours (SST)"></div>
+          <div class="field"><label>Date de la formation</label><input required type="date" id="hf-date-formation"></div>
+          <div class="field"><label>Date d'expiration (optionnel)</label><input type="date" id="hf-date-expiration"></div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="formation-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- ERT -->
+      <div id="hse-sub-ert" class="subpanel hidden">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Équipe de Réponse aux Urgences (ERT)</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-ert-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Ajouter un membre</button>
+        </div>
+        <form class="inline-form hidden" id="add-ert-form" onsubmit="addErt(event)">
+          <div class="field"><label>Nom</label><input required id="he-nom" placeholder="Ex : Nguema Paul"></div>
+          <div class="field"><label>Rôle dans l'ERT</label>
+            <select id="he-role">
+              <option>Chef ERT</option>
+              <option>Secouriste</option>
+              <option>Équipier incendie</option>
+              <option>Opérateur radio</option>
+              <option>Chauffeur d'intervention</option>
+            </select>
+          </div>
+          <div class="field"><label>Téléphone</label><input id="he-tel" placeholder="Ex : 077 12 34 56"></div>
+          <div class="field"><label>Disponibilité</label><input id="he-dispo" placeholder="Ex : Astreinte 24h/24"></div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="ert-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- Urgences / premiers secours -->
+      <div id="hse-sub-urgence" class="subpanel hidden">
+        <div class="panel-title"><h2 style="font-size:15px;">Contacts d'urgence</h2></div>
+        <form class="inline-form" id="add-contact-urgence-form" onsubmit="addContactUrgence(event)" style="margin-top:0;padding-top:0;border-top:none;">
+          <div class="field"><label>Nom</label><input required id="hc-nom" placeholder="Ex : Infirmerie du site"></div>
+          <div class="field"><label>Fonction</label><input id="hc-fonction" placeholder="Ex : Responsable médical"></div>
+          <div class="field"><label>Téléphone</label><input required id="hc-tel" placeholder="Ex : 077 12 34 56"></div>
+          <button class="btn btn-primary" type="submit">Ajouter ce contact</button>
+        </form>
+        <div id="contact-urgence-list" style="margin-top:14px;"><div class="empty-note">Chargement…</div></div>
+
+        <div class="panel-title" style="margin-top:24px;"><h2 style="font-size:15px;">Marche à suivre en cas d'urgence</h2></div>
+        <textarea id="hu-procedure" rows="5" style="width:100%;font:inherit;font-size:13.5px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:'IBM Plex Sans';" placeholder="Ex : 1. Sécuriser la zone… 2. Alerter le poste de contrôle radio… 3. Activer l'ERT…" onchange="saveUrgenceInfo()"></textarea>
+
+        <div class="panel-title" style="margin-top:18px;"><h2 style="font-size:15px;">Emplacement des kits de premiers secours</h2></div>
+        <textarea id="hu-kits" rows="3" style="width:100%;font:inherit;font-size:13.5px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:'IBM Plex Sans';" placeholder="Ex : Atelier mécanique, poste de garde, chaque véhicule d'intervention…" onchange="saveUrgenceInfo()"></textarea>
       </div>
     </div>
 
@@ -816,7 +886,7 @@ function updateOfflineBanner(){
   }
 }
 window.addEventListener('offline', updateOfflineBanner);
-window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); loadHseRisques(); loadHseAudits(); loadHseIncidents(); loadHseKpi(); } });
+window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); loadHseRisques(); loadHseAudits(); loadHseIncidents(); loadHseKpi(); loadHseFormations(); loadHseErt(); loadHseContactsUrgence(); loadHseUrgenceInfo(); } });
 
 function cacheLocal(key, data){
   try {
@@ -1029,6 +1099,10 @@ async function revealDashboard(user, opts){
   await loadHseAudits();
   await loadHseIncidents();
   await loadHseKpi();
+  await loadHseFormations();
+  await loadHseErt();
+  await loadHseContactsUrgence();
+  await loadHseUrgenceInfo();
 
   // Panneau admin : visible et chargé uniquement pour le compte administrateur.
   if (currentUser && currentUser.id === ADMIN_UID) {
@@ -1052,7 +1126,7 @@ function switchTab(name){
 
 /* ---- Sécurité (HSE) : sous-onglets ---- */
 function switchHseSub(name){
-  ['risques','matrice','kpi','audits','incidents','controle'].forEach(t=>{
+  ['risques','matrice','kpi','audits','incidents','controle','formation','ert','urgence'].forEach(t=>{
     document.getElementById('hse-sub-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('hse-sub-btn-'+t).classList.toggle('active', t===name);
   });
@@ -2551,6 +2625,204 @@ async function saveControleTechnique(vehicleId, dateVal){
   const v = vehicles.find(x=>x.id===vehicleId);
   if (v) v.controle_technique_date = dateVal || null;
   renderHseControle();
+}
+
+/* ---- Formation du personnel ---- */
+let hseFormations = [];
+async function loadHseFormations(){
+  if (!navigator.onLine) { hseFormations = readLocal('hse_formations'); renderFormationList(); return; }
+  const { data, error } = await sb.from('hse_formations').select('*').order('date_formation', { ascending: false });
+  if (error) { hseFormations = readLocal('hse_formations'); renderFormationList(); return; }
+  hseFormations = data || [];
+  cacheLocal('hse_formations', hseFormations);
+  renderFormationList();
+}
+function renderFormationList(){
+  const el = document.getElementById('formation-list');
+  if (!el) return;
+  if (!hseFormations.length){ el.innerHTML = '<div class="empty-note">Aucune formation enregistrée.</div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  el.innerHTML = '';
+  hseFormations.forEach(f=>{
+    let cls='faible', label='À jour';
+    if (f.date_expiration){
+      const diff = Math.round((new Date(f.date_expiration) - new Date(today))/86400000);
+      if (diff<0){ cls='critique'; label='Expirée'; } else if (diff<=30){ cls='modere'; label='À renouveler'; }
+    }
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(f.personne)} — ${hseEsc(f.type_formation)}</b>
+        <span class="prio ${cls}">${label}</span>
+      </div>
+      <div class="bstatus">${hseEsc(f.poste||'—')} · formée le ${f.date_formation}${f.date_expiration ? ' · expire le '+f.date_expiration : ' · sans expiration'}</div>
+      ${f.notes ? `<div class="bd-desc">${hseEsc(f.notes)}</div>` : ''}
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteFormation('${f.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addFormation(e){
+  e.preventDefault();
+  const payload = {
+    personne: document.getElementById('hf-personne').value.trim(),
+    poste: document.getElementById('hf-poste').value,
+    type_formation: document.getElementById('hf-type').value.trim(),
+    date_formation: document.getElementById('hf-date-formation').value,
+    date_expiration: document.getElementById('hf-date-expiration').value || null
+  };
+  const { error } = await sb.from('hse_formations').insert([payload]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-formation-form').reset();
+  document.getElementById('add-formation-form').classList.add('hidden');
+  await loadHseFormations();
+}
+async function deleteFormation(id){
+  if (!confirm("Supprimer cette formation ?")) return;
+  const { error } = await sb.from('hse_formations').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseFormations();
+}
+
+/* ---- ERT (Équipe de Réponse aux Urgences) ---- */
+let hseErt = [];
+async function loadHseErt(){
+  if (!navigator.onLine) { hseErt = readLocal('hse_ert'); renderErtList(); return; }
+  const { data, error } = await sb.from('hse_ert').select('*').order('created_at', { ascending: true });
+  if (error) { hseErt = readLocal('hse_ert'); renderErtList(); return; }
+  hseErt = data || [];
+  cacheLocal('hse_ert', hseErt);
+  renderErtList();
+}
+function renderErtList(){
+  const el = document.getElementById('ert-list');
+  if (!el) return;
+  if (!hseErt.length){ el.innerHTML = '<div class="empty-note">Aucun membre ERT enregistré.</div>'; return; }
+  el.innerHTML = '';
+  hseErt.forEach(m=>{
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(m.nom)}</b>
+        <span class="category-badge">${hseEsc(m.role_ert)}</span>
+      </div>
+      <div class="bstatus">${m.telephone ? hseEsc(m.telephone) : 'Téléphone non renseigné'}${m.disponibilite ? ' · '+hseEsc(m.disponibilite) : ''}</div>
+      ${m.notes ? `<div class="bd-desc">${hseEsc(m.notes)}</div>` : ''}
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteErt('${m.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addErt(e){
+  e.preventDefault();
+  const payload = {
+    nom: document.getElementById('he-nom').value.trim(),
+    role_ert: document.getElementById('he-role').value,
+    telephone: document.getElementById('he-tel').value.trim(),
+    disponibilite: document.getElementById('he-dispo').value.trim()
+  };
+  const { error } = await sb.from('hse_ert').insert([payload]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-ert-form').reset();
+  document.getElementById('add-ert-form').classList.add('hidden');
+  await loadHseErt();
+}
+async function deleteErt(id){
+  if (!confirm("Supprimer ce membre de l'ERT ?")) return;
+  const { error } = await sb.from('hse_ert').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseErt();
+}
+
+/* ---- Urgences : contacts + procédure + kits ---- */
+let hseContactsUrgence = [];
+let hseUrgenceInfo = null;
+async function loadHseContactsUrgence(){
+  if (!navigator.onLine) { hseContactsUrgence = readLocal('hse_contacts_urgence'); renderContactUrgenceList(); return; }
+  const { data, error } = await sb.from('hse_contacts_urgence').select('*').order('created_at', { ascending: true });
+  if (error) { hseContactsUrgence = readLocal('hse_contacts_urgence'); renderContactUrgenceList(); return; }
+  hseContactsUrgence = data || [];
+  cacheLocal('hse_contacts_urgence', hseContactsUrgence);
+  renderContactUrgenceList();
+}
+function renderContactUrgenceList(){
+  const el = document.getElementById('contact-urgence-list');
+  if (!el) return;
+  if (!hseContactsUrgence.length){ el.innerHTML = '<div class="empty-note">Aucun contact d’urgence enregistré.</div>'; return; }
+  el.innerHTML = '';
+  hseContactsUrgence.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(c.nom)}</b>
+        <a href="tel:${hseEsc(c.telephone)}" style="color:var(--ink);font-family:'IBM Plex Mono';font-size:13px;">${hseEsc(c.telephone)}</a>
+      </div>
+      ${c.fonction ? `<div class="bstatus">${hseEsc(c.fonction)}</div>` : ''}
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteContactUrgence('${c.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addContactUrgence(e){
+  e.preventDefault();
+  const payload = {
+    nom: document.getElementById('hc-nom').value.trim(),
+    fonction: document.getElementById('hc-fonction').value.trim(),
+    telephone: document.getElementById('hc-tel').value.trim()
+  };
+  const { error } = await sb.from('hse_contacts_urgence').insert([payload]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-contact-urgence-form').reset();
+  await loadHseContactsUrgence();
+}
+async function deleteContactUrgence(id){
+  if (!confirm("Supprimer ce contact d'urgence ?")) return;
+  const { error } = await sb.from('hse_contacts_urgence').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseContactsUrgence();
+}
+
+async function loadHseUrgenceInfo(){
+  if (!navigator.onLine) {
+    const c = readLocal('hse_urgence_info_obj'); hseUrgenceInfo = (c && c[0]) || null;
+    renderUrgenceInfo();
+    return;
+  }
+  const { data, error } = await sb.from('hse_urgence_info').select('*').maybeSingle();
+  if (error) { renderUrgenceInfo(); return; }
+  hseUrgenceInfo = data || null;
+  if (hseUrgenceInfo) cacheLocal('hse_urgence_info_obj', [hseUrgenceInfo]);
+  renderUrgenceInfo();
+}
+function renderUrgenceInfo(){
+  const proc = document.getElementById('hu-procedure');
+  const kits = document.getElementById('hu-kits');
+  if (!proc || !kits) return;
+  if (document.activeElement === proc || document.activeElement === kits) return;
+  proc.value = hseUrgenceInfo ? (hseUrgenceInfo.procedure_urgence || '') : '';
+  kits.value = hseUrgenceInfo ? (hseUrgenceInfo.emplacement_kits || '') : '';
+}
+async function saveUrgenceInfo(){
+  const payload = {
+    procedure_urgence: document.getElementById('hu-procedure').value,
+    emplacement_kits: document.getElementById('hu-kits').value
+  };
+  if (!hseUrgenceInfo){
+    const { data, error } = await sb.from('hse_urgence_info').insert([payload]).select().single();
+    if (error) { alert("Erreur : " + error.message); return; }
+    hseUrgenceInfo = data;
+  } else {
+    const { error } = await sb.from('hse_urgence_info').update(payload).eq('id', hseUrgenceInfo.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    hseUrgenceInfo = Object.assign({}, hseUrgenceInfo, payload);
+  }
+  cacheLocal('hse_urgence_info_obj', [hseUrgenceInfo]);
 }
 
 /* ==========================================================
