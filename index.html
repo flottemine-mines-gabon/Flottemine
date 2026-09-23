@@ -43,7 +43,7 @@ Minimum version required to store current data is: `+i+`.
     --yellow:#FFB800; --yellow-dim:#D6A24C; --rust:#0F2A1C;
     --ok:#1E8A4C; --warn:#B5651D; --bad:#C5311E; --info:#2E5FC2;
     --accent-vehicles:#5B93F5; --accent-drivers:#9B7FE8; --accent-scan:#3FB6A8;
-    --accent-breakdowns:#E5573F; --accent-parts:#C2542B; --accent-stats:#D9A441;
+    --accent-breakdowns:#E5573F; --accent-parts:#C2542B; --accent-stats:#D9A441; --accent-hse:#A6334D;
     --radius:8px;
   }
   *{box-sizing:border-box;}
@@ -99,6 +99,7 @@ Minimum version required to store current data is: `+i+`.
   .section-icon.acc-breakdowns{background:var(--accent-breakdowns);}
   .section-icon.acc-parts{background:var(--accent-parts);}
   .section-icon.acc-stats{background:var(--accent-stats);}
+  .section-icon.acc-hse{background:var(--accent-hse);}
   #tab-btn-vehicles:not(.active) svg{color:var(--accent-vehicles);}
   #tab-btn-drivers:not(.active) svg{color:var(--accent-drivers);}
   #tab-btn-scan:not(.active) svg{color:var(--accent-scan);}
@@ -190,6 +191,22 @@ Minimum version required to store current data is: `+i+`.
   .bd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
   .bd-desc{font-size:13.5px;margin:6px 0;font-family:'IBM Plex Sans';}
   .bd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+
+  /* ---- HSE ---- */
+  .prio.modere{background:rgba(181,101,29,.15);color:var(--warn);}
+  .prio.eleve{background:rgba(229,87,63,.15);color:var(--accent-breakdowns);}
+  .prio.critique{background:rgba(197,49,30,.15);color:var(--bad);}
+  .subtabs{display:flex;gap:6px;overflow-x:auto;margin:14px 0 18px;padding-bottom:2px;}
+  .subtab-btn{flex:0 0 auto;font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;}
+  .subtab-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+  .subpanel.hidden{display:none;}
+  .hse-matrix{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;max-width:440px;}
+  .hse-mcell{display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:10px;line-height:1.3;font-weight:600;padding:9px 2px;text-align:center;font-family:'IBM Plex Sans';color:#fff;}
+  .hse-kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .hse-kpi-tile{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
+  .hse-kpi-tile .hkt-label{font-size:11px;color:var(--ink-soft);font-family:'IBM Plex Sans';}
+  .hse-kpi-tile b{font-family:'IBM Plex Mono';font-size:20px;}
+  .hse-kpi-tile .hkt-target{font-size:10.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';}
   .btn-tiny{padding:6px 11px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:11.5px;cursor:pointer;font-family:'IBM Plex Sans';display:inline-flex;align-items:center;gap:6px;}
   .btn-tiny svg{flex-shrink:0;}
   .row-status-icon{display:inline-flex;flex-shrink:0;}
@@ -343,6 +360,7 @@ Minimum version required to store current data is: `+i+`.
       <button class="tab-btn" id="tab-btn-breakdowns" onclick="switchTab('breakdowns')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Pannes</button>
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
       <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="6" width="3" height="12"/></svg>Tableau de bord</button>
+      <button class="tab-btn" id="tab-btn-hse" onclick="switchTab('hse')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Sécurité (HSE)</button>
     </div>
 
     <!-- ===== ONGLET VÉHICULES ===== -->
@@ -611,6 +629,107 @@ Minimum version required to store current data is: `+i+`.
         <div id="stats-problem-vehicles"><div class="empty-note">Aucune panne enregistrée.</div></div>
       </div>
     </div>
+
+    <!-- ===== ONGLET SÉCURITÉ (HSE) ===== -->
+    <div id="tab-hse" class="tab-panel hidden">
+      <div class="panel-title">
+        <h2><span class="section-icon acc-hse"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg></span>Sécurité — HSE Belinga</h2>
+      </div>
+
+      <div class="subtabs">
+        <button class="subtab-btn active" id="hse-sub-btn-risques" onclick="switchHseSub('risques')">Risques</button>
+        <button class="subtab-btn" id="hse-sub-btn-matrice" onclick="switchHseSub('matrice')">Matrice</button>
+        <button class="subtab-btn" id="hse-sub-btn-kpi" onclick="switchHseSub('kpi')">KPI</button>
+        <button class="subtab-btn" id="hse-sub-btn-audits" onclick="switchHseSub('audits')">Audits</button>
+        <button class="subtab-btn" id="hse-sub-btn-incidents" onclick="switchHseSub('incidents')">Incidents</button>
+        <button class="subtab-btn" id="hse-sub-btn-controle" onclick="switchHseSub('controle')">Contrôle véhicules</button>
+      </div>
+
+      <!-- Risques -->
+      <div id="hse-sub-risques" class="subpanel">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Registre des risques</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-risque-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Ajouter un risque</button>
+        </div>
+        <form class="inline-form hidden" id="add-risque-form" onsubmit="addRisque(event)">
+          <div class="field"><label>Domaine</label><input required id="hr-domaine" placeholder="Ex : Transport routier"></div>
+          <div class="field"><label>Danger identifié</label><input required id="hr-danger" placeholder="Ex : Collision / sortie de piste"></div>
+          <div class="field"><label>Mesures de maîtrise</label><input id="hr-mesures" placeholder="Ex : Limitation de vitesse, formation…"></div>
+          <div class="field"><label>Probabilité (1 = rare, 5 = quasi certain)</label>
+            <select id="hr-prob"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+          </div>
+          <div class="field"><label>Gravité (1 = négligeable, 5 = catastrophique)</label>
+            <select id="hr-grav"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+          </div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="risque-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- Matrice -->
+      <div id="hse-sub-matrice" class="subpanel hidden">
+        <div class="panel-title"><h2 style="font-size:15px;">Matrice de criticité</h2></div>
+        <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Probabilité (P, lignes de bas en haut) × Gravité (G, colonnes) — utilisée pour calculer automatiquement le niveau des risques.</p>
+        <div id="hse-matrix-wrap"></div>
+      </div>
+
+      <!-- KPI -->
+      <div id="hse-sub-kpi" class="subpanel hidden">
+        <div class="panel-title"><h2 style="font-size:15px;">Indicateurs HSE</h2></div>
+        <div class="hse-kpi-grid" id="hse-kpi-tiles"></div>
+        <div class="panel-title" style="margin-top:22px;"><h2 style="font-size:14px;">Données sources</h2></div>
+        <div class="hse-kpi-grid" id="hse-kpi-inputs"></div>
+      </div>
+
+      <!-- Audits -->
+      <div id="hse-sub-audits" class="subpanel hidden">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Suivi des audits</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-audit-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Ajouter un audit</button>
+        </div>
+        <form class="inline-form hidden" id="add-audit-form" onsubmit="addAudit(event)">
+          <div class="field"><label>Type d'audit</label><input required id="ha-type" placeholder="Ex : Audit interne HSE"></div>
+          <div class="field"><label>Périmètre</label><input id="ha-perimetre" placeholder="Ex : Atelier mécanique"></div>
+          <div class="field"><label>Fréquence</label>
+            <select id="ha-freq"><option value="7">Hebdomadaire</option><option value="90" selected>Trimestriel</option><option value="182">Semestriel</option><option value="365">Annuel</option></select>
+          </div>
+          <div class="field"><label>Dernière réalisation</label><input required type="date" id="ha-date"></div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="audit-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- Incidents -->
+      <div id="hse-sub-incidents" class="subpanel hidden">
+        <div class="panel-title">
+          <h2 style="font-size:15px;">Registre des incidents</h2>
+          <button class="btn btn-secondary" onclick="toggleEl('add-incident-form')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Déclarer un incident</button>
+        </div>
+        <form class="inline-form hidden" id="add-incident-form" onsubmit="addIncident(event)">
+          <div class="field"><label>Date</label><input required type="date" id="hi-date"></div>
+          <div class="field"><label>Catégorie</label>
+            <select id="hi-cat">
+              <option>Presqu'accident</option>
+              <option>Incident mineur</option>
+              <option>Incident avec arrêt (LTI)</option>
+              <option>Évènement à haut potentiel (HPE)</option>
+              <option>Accident mortel</option>
+            </select>
+          </div>
+          <div class="field"><label>Lieu</label><input id="hi-lieu" placeholder="Ex : Front de taille Est"></div>
+          <div class="field"><label>Description</label><input id="hi-desc" placeholder="Que s'est-il passé ?"></div>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </form>
+        <div id="incident-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+
+      <!-- Contrôle technique véhicules -->
+      <div id="hse-sub-controle" class="subpanel hidden">
+        <div class="panel-title"><h2 style="font-size:15px;">Contrôle technique de la flotte</h2></div>
+        <p style="font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';margin-top:0;">Basé sur les véhicules de l'onglet Véhicules — échéance recalculée automatiquement (1 an après le dernier contrôle).</p>
+        <div id="hse-controle-list"><div class="empty-note">Chargement…</div></div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -692,7 +811,7 @@ function updateOfflineBanner(){
   }
 }
 window.addEventListener('offline', updateOfflineBanner);
-window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); } });
+window.addEventListener('online', () => { updateOfflineBanner(); if (currentUser) { loadVehicles(); loadDrivers(); loadBreakdowns(); loadParts(); loadHseRisques(); loadHseAudits(); loadHseIncidents(); loadHseKpi(); } });
 
 function cacheLocal(key, data){
   try {
@@ -901,16 +1020,31 @@ async function revealDashboard(user, opts){
   await loadDrivers();
   await loadBreakdowns();
   await loadParts();
+  await loadHseRisques();
+  await loadHseAudits();
+  await loadHseIncidents();
+  await loadHseKpi();
 }
 
 /* ---- Tabs ---- */
 function switchTab(name){
   if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
-  ['vehicles','drivers','scan','breakdowns','parts','stats'].forEach(t=>{
+  ['vehicles','drivers','scan','breakdowns','parts','stats','hse'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
   if (name === 'stats') renderStatsDashboard();
+  if (name === 'hse') switchHseSub('risques');
+}
+
+/* ---- Sécurité (HSE) : sous-onglets ---- */
+function switchHseSub(name){
+  ['risques','matrice','kpi','audits','incidents','controle'].forEach(t=>{
+    document.getElementById('hse-sub-'+t).classList.toggle('hidden', t!==name);
+    document.getElementById('hse-sub-btn-'+t).classList.toggle('active', t===name);
+  });
+  if (name === 'matrice') renderHseMatrix();
+  if (name === 'controle') renderHseControle();
 }
 function toggleEl(id){ document.getElementById(id).classList.toggle('hidden'); }
 
@@ -969,6 +1103,7 @@ async function loadVehicles(){
   if (vsel) vsel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.model}</option>`).join('') || '<option value="">Aucun véhicule — ajoutez-en un d\'abord</option>';
   populateVehicleSelects();
   populateCategorySelects();
+  renderHseControle();
 }
 
 function populateVehicleSelects(){
@@ -2186,6 +2321,334 @@ async function deleteBreakdown(id){
   const { error } = await sb.from('breakdowns').delete().eq('id', id);
   if (error) { alert("Erreur : " + error.message); return; }
   await loadBreakdowns();
+}
+
+/* ==========================================================
+   SÉCURITÉ (HSE) — risques, matrice, KPI, audits, incidents,
+   contrôle technique de la flotte. Mêmes conventions que le
+   reste de l'app (chargement + cache hors ligne, tables
+   hse_risques / hse_audits / hse_incidents / hse_kpi).
+   ========================================================== */
+let hseRisques = [];
+let hseAudits = [];
+let hseIncidents = [];
+let hseKpi = null;
+
+function hseEsc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const HSE_MATRIX = [
+  ['faible','faible','faible','modere','eleve'],
+  ['faible','faible','modere','eleve','eleve'],
+  ['faible','modere','eleve','eleve','critique'],
+  ['faible','modere','eleve','critique','critique'],
+  ['modere','eleve','eleve','critique','critique']
+];
+const HSE_LEVEL_LABEL = {faible:'Faible', modere:'Modéré', eleve:'Élevé', critique:'Critique'};
+const HSE_LEVEL_COLOR = {faible:'var(--ok)', modere:'var(--warn)', eleve:'var(--accent-breakdowns)', critique:'var(--bad)'};
+function hseNiveau(prob, grav){ return HSE_MATRIX[prob-1][grav-1]; }
+function hseAddDaysISO(dateStr, days){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+
+/* ---- Risques ---- */
+async function loadHseRisques(){
+  if (!navigator.onLine) { hseRisques = readLocal('hse_risques'); renderRisqueList(); return; }
+  const { data, error } = await sb.from('hse_risques').select('*').order('created_at', { ascending: true });
+  if (error) { hseRisques = readLocal('hse_risques'); renderRisqueList(); return; }
+  hseRisques = data || [];
+  cacheLocal('hse_risques', hseRisques);
+  renderRisqueList();
+}
+function renderRisqueList(){
+  const el = document.getElementById('risque-list');
+  if (!el) return;
+  if (!hseRisques.length){ el.innerHTML = '<div class="empty-note">Aucun risque enregistré.</div>'; return; }
+  el.innerHTML = '';
+  hseRisques.forEach(r=>{
+    const niv = hseNiveau(r.prob, r.grav);
+    const probOpts = [1,2,3,4,5].map(n=>`<option value="${n}" ${n===r.prob?'selected':''}>${n}</option>`).join('');
+    const gravOpts = [1,2,3,4,5].map(n=>`<option value="${n}" ${n===r.grav?'selected':''}>${n}</option>`).join('');
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(r.domaine)} — ${hseEsc(r.danger)}</b>
+        <span class="prio ${niv}">${HSE_LEVEL_LABEL[niv]}</span>
+      </div>
+      ${r.mesures ? `<div class="bd-desc">${hseEsc(r.mesures)}</div>` : ''}
+      <div class="bstatus" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <span>Probabilité <select onchange="updateRisque('${r.id}',{prob:+this.value})">${probOpts}</select></span>
+        <span>Gravité <select onchange="updateRisque('${r.id}',{grav:+this.value})">${gravOpts}</select></span>
+      </div>
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteRisque('${r.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addRisque(e){
+  e.preventDefault();
+  const domaine = document.getElementById('hr-domaine').value.trim();
+  const danger = document.getElementById('hr-danger').value.trim();
+  const mesures = document.getElementById('hr-mesures').value.trim();
+  const prob = +document.getElementById('hr-prob').value;
+  const grav = +document.getElementById('hr-grav').value;
+  const { error } = await sb.from('hse_risques').insert([{ domaine, danger, mesures, prob, grav }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-risque-form').reset();
+  document.getElementById('add-risque-form').classList.add('hidden');
+  await loadHseRisques();
+}
+async function updateRisque(id, patch){
+  const { error } = await sb.from('hse_risques').update(patch).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseRisques();
+}
+async function deleteRisque(id){
+  if (!confirm("Supprimer ce risque ?")) return;
+  const { error } = await sb.from('hse_risques').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseRisques();
+}
+
+/* ---- Matrice ---- */
+function renderHseMatrix(){
+  const wrap = document.getElementById('hse-matrix-wrap');
+  if (!wrap) return;
+  let html = '<div class="hse-matrix">';
+  for (let p=5; p>=1; p--){
+    for (let g=1; g<=5; g++){
+      const niv = hseNiveau(p,g);
+      html += `<div class="hse-mcell" style="background:${HSE_LEVEL_COLOR[niv]}">P${p}×G${g}<br>${HSE_LEVEL_LABEL[niv]}</div>`;
+    }
+  }
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+/* ---- KPI ---- */
+const HSE_KPI_FIELDS = [
+  ['heures','Heures travaillées'], ['incidents','Incidents enregistrables'],
+  ['lti','Accidents avec arrêt (LTI)'], ['jours_perdus','Jours perdus'],
+  ['deces','Décès'], ['hpe','Évènements à haut potentiel'],
+  ['nearmiss',"Presqu'accidents (mois)"], ['effectif','Effectif total'],
+  ['vfl_real','Inspections VFL réalisées'], ['vfl_plan','Inspections VFL planifiées'],
+  ['form_ajour','Personnel à jour formation'], ['form_effectif','Effectif à former'],
+  ['act_cloturees','Actions clôturées à temps'], ['act_total','Actions totales'],
+  ['toolbox_presence','Présence toolbox talks'], ['toolbox_convies','Effectif convié'],
+  ['delai_moyen_audit','Délai moyen clôture (j)']
+];
+function hk(field){ return hseKpi ? (hseKpi[field]||0) : 0; }
+async function loadHseKpi(){
+  if (!navigator.onLine) { const c = readLocal('hse_kpi_obj'); hseKpi = c && c[0] || null; renderHseKpiTiles(); renderHseKpiInputs(); return; }
+  const { data, error } = await sb.from('hse_kpi').select('*').maybeSingle();
+  if (error) { renderHseKpiTiles(); renderHseKpiInputs(); return; }
+  hseKpi = data || null;
+  if (hseKpi) cacheLocal('hse_kpi_obj', [hseKpi]);
+  renderHseKpiTiles();
+  renderHseKpiInputs();
+}
+function renderHseKpiInputs(){
+  const el = document.getElementById('hse-kpi-inputs');
+  if (!el) return;
+  if (document.activeElement && document.activeElement.dataset && document.activeElement.dataset.hkey) return;
+  el.innerHTML = HSE_KPI_FIELDS.map(f=>`<div class="field"><label>${f[1]}</label><input type="number" min="0" data-hkey="${f[0]}" value="${hk(f[0])}" onchange="saveHseKpiField(this)"></div>`).join('');
+}
+async function saveHseKpiField(input){
+  const key = input.dataset.hkey;
+  const val = parseInt(input.value, 10) || 0;
+  const patch = { [key]: val };
+  if (!hseKpi){
+    const { data, error } = await sb.from('hse_kpi').insert([patch]).select().single();
+    if (error) { alert("Erreur : " + error.message); return; }
+    hseKpi = data;
+  } else {
+    const { error } = await sb.from('hse_kpi').update(patch).eq('id', hseKpi.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    hseKpi[key] = val;
+  }
+  cacheLocal('hse_kpi_obj', [hseKpi]);
+  renderHseKpiTiles();
+}
+function hseFmt(n,d){ if(!isFinite(n)) return '—'; return n.toFixed(d==null?2:d).replace(/\.00$/,''); }
+function hseTile(label, value, target, ok){
+  return `<div class="hse-kpi-tile"><span class="hkt-label">${label}</span><b style="color:${ok?'var(--ok)':'var(--bad)'}">${value}</b><span class="hkt-target">Cible ${target}</span></div>`;
+}
+function renderHseKpiTiles(){
+  const el = document.getElementById('hse-kpi-tiles');
+  if (!el) return;
+  const h = hk('heures') || 1;
+  const trifr = hk('incidents')*1000000/h;
+  const ltifr = hk('lti')*1000000/h;
+  const gravite = hk('jours_perdus')*1000/h;
+  const nmRate = (hk('nearmiss')/(hk('effectif')||1))*100;
+  const vflPct = (hk('vfl_real')/(hk('vfl_plan')||1))*100;
+  const formPct = (hk('form_ajour')/(hk('form_effectif')||1))*100;
+  const actPct = (hk('act_cloturees')/(hk('act_total')||1))*100;
+  const tbPct = (hk('toolbox_presence')/(hk('toolbox_convies')||1))*100;
+  el.innerHTML =
+    hseTile('TRIFR', hseFmt(trifr,2), '< 1,0', trifr<=1) +
+    hseTile('LTIFR', hseFmt(ltifr,2), '< 0,5', ltifr<=0.5) +
+    hseTile('Taux de gravité', hseFmt(gravite,3), '< 0,3', gravite<=0.3) +
+    hseTile('Décès', hk('deces'), '0', hk('deces')<=0) +
+    hseTile('Évènements HPE', hk('hpe'), 'analyse au cas par cas', true) +
+    hseTile("Presqu'accidents /100 employés", hseFmt(nmRate,1), '≥ 10', nmRate>=10) +
+    hseTile('Inspections VFL', hseFmt(vflPct,0)+'%', '≥ 95%', vflPct>=95) +
+    hseTile('Couverture formation', hseFmt(formPct,0)+'%', '≥ 98%', formPct>=98) +
+    hseTile('Clôture des actions', hseFmt(actPct,0)+'%', '≥ 90%', actPct>=90) +
+    hseTile('Participation toolbox talks', hseFmt(tbPct,0)+'%', '≥ 95%', tbPct>=95) +
+    hseTile('Délai moyen clôture audit', hk('delai_moyen_audit')+' j', '< 30 j', hk('delai_moyen_audit')<=30);
+}
+
+/* ---- Audits ---- */
+const HSE_FREQ_LABEL = {7:'Hebdomadaire', 90:'Trimestriel', 182:'Semestriel', 365:'Annuel'};
+async function loadHseAudits(){
+  if (!navigator.onLine) { hseAudits = readLocal('hse_audits'); renderAuditList(); return; }
+  const { data, error } = await sb.from('hse_audits').select('*').order('created_at', { ascending: true });
+  if (error) { hseAudits = readLocal('hse_audits'); renderAuditList(); return; }
+  hseAudits = data || [];
+  cacheLocal('hse_audits', hseAudits);
+  renderAuditList();
+}
+function renderAuditList(){
+  const el = document.getElementById('audit-list');
+  if (!el) return;
+  if (!hseAudits.length){ el.innerHTML = '<div class="empty-note">Aucun audit enregistré.</div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  el.innerHTML = '';
+  hseAudits.forEach(a=>{
+    const next = hseAddDaysISO(a.derniere_realisation, a.freq_days);
+    const diff = Math.round((new Date(next) - new Date(today))/86400000);
+    let cls='faible', label='À jour';
+    if (diff<0){ cls='critique'; label='En retard'; } else if (diff<=14){ cls='modere'; label='À venir'; }
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(a.type)}</b>
+        <span class="prio ${cls}">${label}</span>
+      </div>
+      ${a.perimetre ? `<div class="bd-desc">${hseEsc(a.perimetre)}</div>` : ''}
+      <div class="bstatus">${HSE_FREQ_LABEL[a.freq_days]||a.freq_days+' j'} · dernière le ${a.derniere_realisation} · prochaine le ${next}</div>
+      <div class="bd-actions">
+        <button class="btn-tiny danger" onclick="deleteAudit('${a.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addAudit(e){
+  e.preventDefault();
+  const type = document.getElementById('ha-type').value.trim();
+  const perimetre = document.getElementById('ha-perimetre').value.trim();
+  const freq_days = +document.getElementById('ha-freq').value;
+  const derniere_realisation = document.getElementById('ha-date').value;
+  const { error } = await sb.from('hse_audits').insert([{ type, perimetre, freq_days, derniere_realisation }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-audit-form').reset();
+  document.getElementById('add-audit-form').classList.add('hidden');
+  await loadHseAudits();
+}
+async function deleteAudit(id){
+  if (!confirm("Supprimer cet audit ?")) return;
+  const { error } = await sb.from('hse_audits').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseAudits();
+}
+
+/* ---- Incidents ---- */
+async function loadHseIncidents(){
+  if (!navigator.onLine) { hseIncidents = readLocal('hse_incidents'); renderIncidentList(); return; }
+  const { data, error } = await sb.from('hse_incidents').select('*').order('date_incident', { ascending: false });
+  if (error) { hseIncidents = readLocal('hse_incidents'); renderIncidentList(); return; }
+  hseIncidents = data || [];
+  cacheLocal('hse_incidents', hseIncidents);
+  renderIncidentList();
+}
+function renderIncidentList(){
+  const el = document.getElementById('incident-list');
+  if (!el) return;
+  if (!hseIncidents.length){ el.innerHTML = '<div class="empty-note">Aucun incident enregistré.</div>'; return; }
+  el.innerHTML = '';
+  hseIncidents.forEach(i=>{
+    const cls = i.statut==='Ouvert' ? 'modere' : 'faible';
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(i.categorie)} — ${i.date_incident}</b>
+        <span class="prio ${cls}">${hseEsc(i.statut)}</span>
+      </div>
+      ${i.lieu ? `<div class="bstatus">Lieu : ${hseEsc(i.lieu)}</div>` : ''}
+      ${i.description ? `<div class="bd-desc">${hseEsc(i.description)}</div>` : ''}
+      <div class="bd-actions">
+        <button class="btn-tiny" onclick="toggleIncidentStatut('${i.id}','${i.statut==='Ouvert'?'Clôturé':'Ouvert'}')">${i.statut==='Ouvert'?'Marquer clôturé':'Rouvrir'}</button>
+        <button class="btn-tiny danger" onclick="deleteIncident('${i.id}')">Supprimer</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function addIncident(e){
+  e.preventDefault();
+  const date_incident = document.getElementById('hi-date').value;
+  const categorie = document.getElementById('hi-cat').value;
+  const lieu = document.getElementById('hi-lieu').value.trim();
+  const description = document.getElementById('hi-desc').value.trim();
+  const { error } = await sb.from('hse_incidents').insert([{ date_incident, categorie, lieu, description, statut: 'Ouvert' }]);
+  if (error) { alert("Erreur : " + error.message); return; }
+  document.getElementById('add-incident-form').reset();
+  document.getElementById('add-incident-form').classList.add('hidden');
+  await loadHseIncidents();
+}
+async function toggleIncidentStatut(id, statut){
+  const { error } = await sb.from('hse_incidents').update({ statut }).eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseIncidents();
+}
+async function deleteIncident(id){
+  if (!confirm("Supprimer cet incident ?")) return;
+  const { error } = await sb.from('hse_incidents').delete().eq('id', id);
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadHseIncidents();
+}
+
+/* ---- Contrôle technique de la flotte (réutilise `vehicles`) ---- */
+function renderHseControle(){
+  const el = document.getElementById('hse-controle-list');
+  if (!el) return;
+  if (!vehicles.length){ el.innerHTML = '<div class="empty-note">Aucun véhicule enregistré — ajoutez-en un dans l\'onglet Véhicules.</div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  el.innerHTML = '';
+  vehicles.forEach(v=>{
+    let cls='faible', label='À jour', nextTxt='—';
+    if (v.controle_technique_date){
+      nextTxt = hseAddDaysISO(v.controle_technique_date, 365);
+      const diff = Math.round((new Date(nextTxt) - new Date(today))/86400000);
+      if (diff<0){ cls='critique'; label='En retard'; } else if (diff<=30){ cls='modere'; label='À venir'; }
+    } else { cls='modere'; label='Non renseigné'; }
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(v.plate)} — ${hseEsc(v.model)}</b>
+        <span class="prio ${cls}">${label}</span>
+      </div>
+      <div class="bstatus" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>Dernier contrôle : <input type="date" value="${v.controle_technique_date||''}" onchange="saveControleTechnique('${v.id}', this.value)"></span>
+        <span>Prochain : ${nextTxt}</span>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+async function saveControleTechnique(vehicleId, dateVal){
+  const { error } = await sb.from('vehicles').update({ controle_technique_date: dateVal || null }).eq('id', vehicleId);
+  if (error) { alert("Erreur : " + error.message); return; }
+  const v = vehicles.find(x=>x.id===vehicleId);
+  if (v) v.controle_technique_date = dateVal || null;
+  renderHseControle();
 }
 
 /* ---- Tableau de bord statistiques ---- */
