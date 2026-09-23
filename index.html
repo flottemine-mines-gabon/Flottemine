@@ -361,6 +361,7 @@ Minimum version required to store current data is: `+i+`.
       <button class="tab-btn" id="tab-btn-parts" onclick="switchTab('parts')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Pièces & Stock</button>
       <button class="tab-btn" id="tab-btn-stats" onclick="switchTab('stats')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="6" width="3" height="12"/></svg>Tableau de bord</button>
       <button class="tab-btn" id="tab-btn-hse" onclick="switchTab('hse')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Sécurité (HSE)</button>
+      <button class="tab-btn hidden" id="tab-btn-admin" onclick="switchTab('admin')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 8v4l3 2"/></svg>Admin</button>
     </div>
 
     <!-- ===== ONGLET VÉHICULES ===== -->
@@ -730,6 +731,21 @@ Minimum version required to store current data is: `+i+`.
         <div id="hse-controle-list"><div class="empty-note">Chargement…</div></div>
       </div>
     </div>
+
+    <!-- ===== ONGLET ADMIN (visible uniquement pour le compte administrateur) ===== -->
+    <div id="tab-admin" class="tab-panel hidden">
+      <div class="panel-title">
+        <h2><span class="section-icon acc-hse"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 8v4l3 2"/></svg></span>Administration — Abonnements clients</h2>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><b id="adm-kpi-total">0</b><span>clients</span></div>
+        <div class="kpi"><b id="adm-kpi-paid">0</b><span>payants</span></div>
+        <div class="kpi"><b id="adm-kpi-trial">0</b><span>en essai</span></div>
+        <div class="kpi"><b id="adm-kpi-expired">0</b><span>essai expiré</span></div>
+      </div>
+      <div class="panel-title"><h2 style="font-size:15px;">Clients</h2></div>
+      <div id="admin-sub-list"><div class="empty-note">Chargement…</div></div>
+    </div>
   </div>
 </main>
 
@@ -747,6 +763,7 @@ Minimum version required to store current data is: `+i+`.
 const SUPABASE_URL = "https://pgoesbhdbmnjscmvsflv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_QLqQLvr7DrGwfwXcM3EE2Q_x8vjMojB";
 const APP_BASE_URL = "https://flottemine-mines-gabon.github.io/Flottemine/";
+const ADMIN_UID = "2e9e3ebe-8718-443b-828a-01b5854c7e5b"; // seul compte autorisé à activer/désactiver les abonnements (voir admin_set_subscription côté base)
 
 let sb = null;
 let configured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
@@ -1024,17 +1041,26 @@ async function revealDashboard(user, opts){
   await loadHseAudits();
   await loadHseIncidents();
   await loadHseKpi();
+
+  // Panneau admin : visible et chargé uniquement pour le compte administrateur.
+  if (currentUser && currentUser.id === ADMIN_UID) {
+    document.getElementById('tab-btn-admin').classList.remove('hidden');
+    await loadAdminSubscriptions();
+  } else {
+    document.getElementById('tab-btn-admin').classList.add('hidden');
+  }
 }
 
 /* ---- Tabs ---- */
 function switchTab(name){
   if (name !== 'scan' && !document.getElementById('tab-scan').classList.contains('hidden')) stopScan();
-  ['vehicles','drivers','scan','breakdowns','parts','stats','hse'].forEach(t=>{
+  ['vehicles','drivers','scan','breakdowns','parts','stats','hse','admin'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
     document.getElementById('tab-btn-'+t).classList.toggle('active', t===name);
   });
   if (name === 'stats') renderStatsDashboard();
   if (name === 'hse') switchHseSub('risques');
+  if (name === 'admin') loadAdminSubscriptions();
 }
 
 /* ---- Sécurité (HSE) : sous-onglets ---- */
@@ -2649,6 +2675,80 @@ async function saveControleTechnique(vehicleId, dateVal){
   const v = vehicles.find(x=>x.id===vehicleId);
   if (v) v.controle_technique_date = dateVal || null;
   renderHseControle();
+}
+
+/* ==========================================================
+   ADMIN — panneau d'activation des abonnements.
+   Visible et fonctionnel uniquement pour ADMIN_UID : les
+   fonctions admin_list_subscriptions / admin_set_subscription
+   refusent tout autre compte côté base de données (SECURITY
+   DEFINER + vérification auth.uid()), donc même si ce panneau
+   était affiché par erreur, aucune donnée ne fuiterait.
+   ========================================================== */
+let subscriptionsList = [];
+
+async function loadAdminSubscriptions(){
+  if (!currentUser || currentUser.id !== ADMIN_UID) return;
+  const el = document.getElementById('admin-sub-list');
+  const { data, error } = await sb.rpc('admin_list_subscriptions');
+  if (error) { if (el) el.innerHTML = '<div class="empty-note">Erreur : '+hseEsc(error.message)+'</div>'; return; }
+  subscriptionsList = data || [];
+  renderAdminSubscriptions();
+}
+
+function renderAdminSubscriptions(){
+  const el = document.getElementById('admin-sub-list');
+  if (!el) return;
+  const today = new Date();
+
+  const paidCount = subscriptionsList.filter(s=>s.is_paid).length;
+  const trialCount = subscriptionsList.filter(s=>!s.is_paid && Math.floor((today-new Date(s.trial_start))/86400000) <= TRIAL_DAYS).length;
+  const expiredCount = subscriptionsList.filter(s=>!s.is_paid && Math.floor((today-new Date(s.trial_start))/86400000) > TRIAL_DAYS).length;
+  document.getElementById('adm-kpi-total').textContent = subscriptionsList.length;
+  document.getElementById('adm-kpi-paid').textContent = paidCount;
+  document.getElementById('adm-kpi-trial').textContent = trialCount;
+  document.getElementById('adm-kpi-expired').textContent = expiredCount;
+
+  if (!subscriptionsList.length){ el.innerHTML = '<div class="empty-note">Aucun client pour le moment.</div>'; return; }
+  el.innerHTML = '';
+  subscriptionsList.forEach(s=>{
+    const daysElapsed = Math.floor((today - new Date(s.trial_start))/86400000);
+    let cls='faible', label='Payant';
+    if (!s.is_paid){
+      if (daysElapsed > TRIAL_DAYS){ cls='critique'; label='Essai expiré'; }
+      else { cls='modere'; label=`Essai (${TRIAL_DAYS-daysElapsed} j restants)`; }
+    }
+    const safeOwner = s.owner.replace(/'/g,'');
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    div.innerHTML = `
+      <div class="bd-top">
+        <b>${hseEsc(s.email)}</b>
+        <span class="prio ${cls}">${label}</span>
+      </div>
+      <div class="bstatus">Inscrit le ${new Date(s.created_at).toLocaleDateString('fr-FR')} · essai débuté le ${new Date(s.trial_start).toLocaleDateString('fr-FR')}${s.paid_until ? ' · payant jusqu’au '+s.paid_until : ''}</div>
+      <div class="bd-actions" style="align-items:center;">
+        <input type="date" id="adm-date-${safeOwner}" value="${s.paid_until || ''}">
+        <button class="btn-tiny" onclick="adminActivate('${safeOwner}')">Activer / prolonger</button>
+        ${s.is_paid ? `<button class="btn-tiny danger" onclick="adminDeactivate('${safeOwner}')">Désactiver</button>` : ''}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+async function adminActivate(ownerId){
+  const dateInput = document.getElementById('adm-date-'+ownerId);
+  const paidUntil = dateInput ? dateInput.value : '';
+  if (!paidUntil) { alert("Choisis d'abord la date jusqu'à laquelle l'abonnement est payé."); return; }
+  const { error } = await sb.rpc('admin_set_subscription', { target_owner: ownerId, new_is_paid: true, new_paid_until: paidUntil });
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadAdminSubscriptions();
+}
+async function adminDeactivate(ownerId){
+  if (!confirm("Désactiver l'abonnement payant de ce client ? Il repassera en essai gratuit (ou verrouillé si son essai est déjà terminé).")) return;
+  const { error } = await sb.rpc('admin_set_subscription', { target_owner: ownerId, new_is_paid: false, new_paid_until: null });
+  if (error) { alert("Erreur : " + error.message); return; }
+  await loadAdminSubscriptions();
 }
 
 /* ---- Tableau de bord statistiques ---- */
