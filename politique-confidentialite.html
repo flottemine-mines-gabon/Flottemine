@@ -52,7 +52,7 @@
 
 <main>
   <h1>Politique de confidentialité</h1>
-  <div class="updated">Dernière mise à jour : 22 septembre 2026</div>
+  <div class="updated">Dernière mise à jour : 24 septembre 2026</div>
 
   <p>Cette page explique quelles données FlotteMine collecte, pourquoi, où elles sont hébergées, et quels sont vos droits — que vous soyez le client utilisant l'application ou un chauffeur dont les informations y sont enregistrées par son employeur.</p>
 
@@ -68,11 +68,15 @@
     <tr><td>Chauffeurs</td><td>Nom, téléphone, matricule, photo, numéro et date d'expiration du permis, statut et localisation (site / repos / Libreville / congé), véhicule assigné</td></tr>
     <tr><td>Véhicules</td><td>Plaque, modèle, catégorie, kilométrage, historique d'entretien, photos de pannes</td></tr>
     <tr><td>Pièces & stock</td><td>Références et quantités de pièces détachées (aucune donnée personnelle)</td></tr>
+    <tr><td>Carburant</td><td>Historique des pleins par véhicule : date, kilométrage, litres, coût (aucune donnée personnelle)</td></tr>
+    <tr><td>Documents véhicules</td><td>Dates d'expiration du contrôle technique, de l'assurance, de la carte grise et de la vignette</td></tr>
+    <tr><td>Sécurité HSE</td><td>Registre des risques, audits et incidents (date, catégorie, description, lieu) ; formations du personnel (personne, poste, type et dates de formation) ; équipe de réponse aux urgences et contacts d'urgence (nom, téléphone, fonction) ; heures de conduite et de repos par chauffeur</td></tr>
+    <tr><td>Historique des modifications</td><td>Journal technique indiquant quel compte (email) a ajouté, modifié ou supprimé une fiche, et quand — conservé pour la traçabilité et les audits de conformité</td></tr>
     <tr><td>Usage technique</td><td>Données stockées temporairement dans le navigateur (localStorage) pour permettre le fonctionnement hors ligne</td></tr>
   </table>
 
   <h2>3. Finalités</h2>
-  <p>Ces données sont utilisées exclusivement pour permettre au client de suivre son propre parc de véhicules et son propre personnel roulant : disponibilité, entretien, alertes, identification par badge QR. Elles ne sont ni vendues, ni partagées à des fins commerciales ou publicitaires, ni utilisées pour entraîner un quelconque système.</p>
+  <p>Ces données sont utilisées exclusivement pour permettre au client de suivre son propre parc de véhicules, son propre personnel roulant et sa propre démarche de sécurité HSE (prévention des risques, conformité réglementaire, traçabilité en cas d'audit) : disponibilité, entretien, alertes, identification par badge QR. Elles ne sont ni vendues, ni partagées à des fins commerciales ou publicitaires, ni utilisées pour entraîner un quelconque système.</p>
 
   <h2>4. Qui a accès aux données</h2>
   <p>Chaque compte client n'a accès qu'à ses propres données (véhicules, chauffeurs, pièces). Cette séparation est appliquée techniquement au niveau de la base de données, pas seulement dans l'interface. L'éditeur de FlotteMine peut accéder aux données hébergées à des fins strictement techniques (maintenance, support, sécurité) ou sur demande légale.</p>
@@ -83,13 +87,14 @@
     <li>Connexions chiffrées (HTTPS) entre votre appareil et les serveurs.</li>
     <li>Mots de passe gérés par le service d'authentification de Supabase, jamais stockés en clair.</li>
     <li>Accès aux données protégé par des règles de sécurité au niveau de chaque ligne de la base de données (un client ne peut techniquement pas lire les données d'un autre client).</li>
+    <li>Toute création, modification ou suppression de données (véhicules, chauffeurs, fiches HSE…) est enregistrée automatiquement dans un journal technique en lecture seule, consultable par le client dans l'onglet "Historique", pour assurer la traçabilité.</li>
   </ul>
 
   <h2>6. Durée de conservation</h2>
   <p>Les données sont conservées tant que le compte client reste actif. En cas de résiliation ou de suppression d'un compte, les données associées peuvent être supprimées sur simple demande auprès de l'éditeur.</p>
 
   <h2>7. Vos droits</h2>
-  <p>Toute personne dont des données sont enregistrées dans FlotteMine (client ou chauffeur dont les informations ont été saisies par son employeur) peut demander à y accéder, les faire corriger, ou en demander la suppression, en écrivant à l'adresse indiquée à la section 1. Une demande concernant les données d'un chauffeur doit passer par l'entreprise qui gère son compte, celle-ci étant responsable des informations qu'elle y saisit.</p>
+  <p>Toute personne dont des données sont enregistrées dans FlotteMine — client, chauffeur, ou toute autre personne dont les coordonnées ont été saisies par le client (par exemple un membre de l'équipe de réponse aux urgences ou un contact d'urgence) — peut demander à y accéder, les faire corriger, ou en demander la suppression, en écrivant à l'adresse indiquée à la section 1. Une telle demande doit passer par l'entreprise qui gère le compte concerné, celle-ci étant responsable des informations qu'elle y saisit.</p>
 
   <h2>8. Cookies et stockage local</h2>
   <p>FlotteMine n'utilise aucun cookie publicitaire ni traceur tiers. Le navigateur conserve localement (localStorage) une copie des dernières données synchronisées, uniquement pour permettre à l'application de continuer à afficher les informations en l'absence de connexion internet.</p>
