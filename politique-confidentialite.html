@@ -54,17 +54,24 @@
   <h1>Politique de confidentialité</h1>
   <div class="updated">Dernière mise à jour : 24 septembre 2026</div>
 
-  <p>Cette page explique quelles données FlotteMine collecte, pourquoi, où elles sont hébergées, et quels sont vos droits — que vous soyez le client utilisant l'application ou un chauffeur dont les informations y sont enregistrées par son employeur.</p>
+  <p>Cette politique explique quelles données à caractère personnel FlotteMine (« l'application », « le Service ») traite, sur quelle base, avec qui elles sont partagées, où elles sont hébergées et quels droits vous pouvez exercer — que vous soyez l'entreprise cliente utilisant l'application, un chauffeur, ou toute autre personne (membre d'une équipe de réponse aux urgences, contact d'urgence…) dont les informations y ont été enregistrées par un client.</p>
 
-  <h2>1. Responsable du traitement</h2>
+  <h2>1. Champ d'application et rôles</h2>
+  <p>FlotteMine distingue deux rôles au sens de la réglementation applicable en matière de protection des données :</p>
+  <ul>
+    <li><b>Pour les données de compte et les données techniques de la plateforme</b> (identifiants de connexion, journal d'accès, abonnement), l'éditeur de FlotteMine est responsable du traitement.</li>
+    <li><b>Pour les données que le client saisit lui-même dans l'application</b> concernant son propre personnel et ses propres opérations (chauffeurs, formations, équipe de réponse aux urgences, contacts d'urgence, incidents, heures de conduite…), <b>le client est responsable du traitement</b>. Il décide quelles données saisir, sur quelles personnes, et pour quelles finalités ; il doit s'assurer d'en informer ces personnes et de disposer d'une base légale appropriée pour le faire (par exemple au titre de sa relation d'employeur). L'éditeur intervient alors uniquement comme sous-traitant technique, qui héberge et traite ces données sur instruction du client.</li>
+  </ul>
+
+  <h2>2. Responsable du traitement / éditeur</h2>
   <div class="card">
     <p>Samuel Ekomo — Téléphone : +241 77 719 076 / 076 262 952 — Email : samuelekomo24@gmail.com</p>
   </div>
 
-  <h2>2. Données collectées</h2>
+  <h2>3. Données collectées</h2>
   <table>
     <tr><th>Catégorie</th><th>Données</th></tr>
-    <tr><td>Compte client</td><td>Email, mot de passe (chiffré, jamais stocké en clair)</td></tr>
+    <tr><td>Compte client</td><td>Email, mot de passe (chiffré, jamais stocké en clair), statut d'abonnement</td></tr>
     <tr><td>Chauffeurs</td><td>Nom, téléphone, matricule, photo, numéro et date d'expiration du permis, statut et localisation (site / repos / Libreville / congé), véhicule assigné</td></tr>
     <tr><td>Véhicules</td><td>Plaque, modèle, catégorie, kilométrage, historique d'entretien, photos de pannes</td></tr>
     <tr><td>Pièces & stock</td><td>Références et quantités de pièces détachées (aucune donnée personnelle)</td></tr>
@@ -72,38 +79,64 @@
     <tr><td>Documents véhicules</td><td>Dates d'expiration du contrôle technique, de l'assurance, de la carte grise et de la vignette</td></tr>
     <tr><td>Sécurité HSE</td><td>Registre des risques, audits et incidents (date, catégorie, description, lieu) ; formations du personnel (personne, poste, type et dates de formation) ; équipe de réponse aux urgences et contacts d'urgence (nom, téléphone, fonction) ; heures de conduite et de repos par chauffeur</td></tr>
     <tr><td>Historique des modifications</td><td>Journal technique indiquant quel compte (email) a ajouté, modifié ou supprimé une fiche, et quand — conservé pour la traçabilité et les audits de conformité</td></tr>
-    <tr><td>Usage technique</td><td>Données stockées temporairement dans le navigateur (localStorage) pour permettre le fonctionnement hors ligne</td></tr>
+    <tr><td>Usage technique</td><td>Données stockées temporairement dans le navigateur (localStorage) pour permettre le fonctionnement hors ligne ; adresses IP et journaux techniques de connexion conservés par l'hébergeur</td></tr>
   </table>
 
-  <h2>3. Finalités</h2>
-  <p>Ces données sont utilisées exclusivement pour permettre au client de suivre son propre parc de véhicules, son propre personnel roulant et sa propre démarche de sécurité HSE (prévention des risques, conformité réglementaire, traçabilité en cas d'audit) : disponibilité, entretien, alertes, identification par badge QR. Elles ne sont ni vendues, ni partagées à des fins commerciales ou publicitaires, ni utilisées pour entraîner un quelconque système.</p>
-
-  <h2>4. Qui a accès aux données</h2>
-  <p>Chaque compte client n'a accès qu'à ses propres données (véhicules, chauffeurs, pièces). Cette séparation est appliquée techniquement au niveau de la base de données, pas seulement dans l'interface. L'éditeur de FlotteMine peut accéder aux données hébergées à des fins strictement techniques (maintenance, support, sécurité) ou sur demande légale.</p>
-
-  <h2>5. Hébergement et sécurité</h2>
+  <h2>4. Base légale et finalités des traitements</h2>
   <ul>
-    <li>Base de données et fichiers hébergés par Supabase, sur des serveurs situés en Irlande (Union Européenne).</li>
-    <li>Connexions chiffrées (HTTPS) entre votre appareil et les serveurs.</li>
-    <li>Mots de passe gérés par le service d'authentification de Supabase, jamais stockés en clair.</li>
-    <li>Accès aux données protégé par des règles de sécurité au niveau de chaque ligne de la base de données (un client ne peut techniquement pas lire les données d'un autre client).</li>
-    <li>Toute création, modification ou suppression de données (véhicules, chauffeurs, fiches HSE…) est enregistrée automatiquement dans un journal technique en lecture seule, consultable par le client dans l'onglet "Historique", pour assurer la traçabilité.</li>
+    <li><b>Exécution du contrat</b> : création et gestion du compte client, fourniture du Service, gestion de l'abonnement.</li>
+    <li><b>Intérêt légitime du client / obligations de l'employeur</b> : gestion opérationnelle de la flotte et du personnel roulant, prévention des risques et sécurité au travail, conformité aux exigences HSE et réglementaires applicables au secteur minier et au transport (il appartient au client d'apprécier et de justifier cette base légale pour les données qu'il saisit).</li>
+    <li><b>Intérêt légitime de l'éditeur</b> : sécurité de la plateforme, prévention de la fraude, amélioration technique du Service, traçabilité des actions (journal d'historique).</li>
+  </ul>
+  <p>Ces données ne sont utilisées que pour ces finalités. Elles ne sont ni vendues, ni louées, ni partagées à des fins commerciales ou publicitaires, ni utilisées pour entraîner un quelconque système ou modèle.</p>
+
+  <h2>5. Destinataires des données</h2>
+  <p>Chaque compte client n'a accès qu'à ses propres données (véhicules, chauffeurs, pièces, fiches HSE). Cette séparation est appliquée techniquement au niveau de la base de données, pas seulement dans l'interface visible. Au-delà du client lui-même, les données peuvent être consultées par :</p>
+  <ul>
+    <li>l'éditeur de FlotteMine, à des fins strictement techniques (maintenance, support, sécurité) ou en réponse à une obligation légale ;</li>
+    <li>les sous-traitants techniques d'hébergement listés à la section 6, dans la limite nécessaire à la fourniture du Service.</li>
   </ul>
 
-  <h2>6. Durée de conservation</h2>
-  <p>Les données sont conservées tant que le compte client reste actif. En cas de résiliation ou de suppression d'un compte, les données associées peuvent être supprimées sur simple demande auprès de l'éditeur.</p>
+  <h2>6. Sous-traitants, hébergement et transferts de données</h2>
+  <ul>
+    <li><b>Supabase Inc.</b> — base de données, authentification et stockage de fichiers, hébergés sur des serveurs situés en Irlande (Union européenne).</li>
+    <li><b>GitHub Pages</b> (GitHub Inc. / Microsoft) — hébergement du code de l'application.</li>
+  </ul>
+  <p>Ces prestataires agissent comme sous-traitants techniques de l'éditeur et n'ont pas vocation à utiliser les données à d'autres fins que la fourniture du service d'hébergement. Le recours à ces prestataires implique que les données soient traitées en dehors du Gabon, notamment dans l'Union européenne ; l'éditeur veille à ce qu'ils appliquent des standards de sécurité reconnus (chiffrement des données en transit et au repos, contrôle d'accès).</p>
 
-  <h2>7. Vos droits</h2>
-  <p>Toute personne dont des données sont enregistrées dans FlotteMine — client, chauffeur, ou toute autre personne dont les coordonnées ont été saisies par le client (par exemple un membre de l'équipe de réponse aux urgences ou un contact d'urgence) — peut demander à y accéder, les faire corriger, ou en demander la suppression, en écrivant à l'adresse indiquée à la section 1. Une telle demande doit passer par l'entreprise qui gère le compte concerné, celle-ci étant responsable des informations qu'elle y saisit.</p>
+  <h2>7. Durée de conservation</h2>
+  <p>Les données sont conservées tant que le compte client reste actif. En cas de résiliation ou de demande de suppression d'un compte, les données associées sont supprimées dans un délai raisonnable, sous réserve des données que l'éditeur ou l'hébergeur doivent conserver plus longtemps pour répondre à une obligation légale (par exemple des journaux techniques de sécurité).</p>
 
-  <h2>8. Cookies et stockage local</h2>
+  <h2>8. Sécurité</h2>
+  <ul>
+    <li>Connexions chiffrées (HTTPS/TLS) entre votre appareil et les serveurs.</li>
+    <li>Mots de passe gérés par le service d'authentification de Supabase, jamais stockés en clair.</li>
+    <li>Accès aux données protégé par des règles de sécurité au niveau de chaque ligne de la base de données (un client ne peut techniquement pas lire les données d'un autre client).</li>
+    <li>Toute création, modification ou suppression de données (véhicules, chauffeurs, fiches HSE…) est enregistrée automatiquement dans un journal technique en lecture seule, consultable par le client dans l'onglet « Historique », pour assurer la traçabilité.</li>
+    <li>Accès administrateur à la plateforme limité à un compte unique, technique, distinct des comptes clients.</li>
+  </ul>
+
+  <h2>9. Vos droits</h2>
+  <p>Conformément aux principes de la réglementation gabonaise relative à la protection des données à caractère personnel (loi n° 001/2011 du 25 septembre 2011), toute personne dont des données sont traitées dans FlotteMine — client, chauffeur, ou toute autre personne dont les coordonnées ont été saisies par un client (par exemple un membre de l'équipe de réponse aux urgences ou un contact d'urgence) — dispose des droits suivants sur ses données :</p>
+  <ul>
+    <li>droit d'accès aux données la concernant ;</li>
+    <li>droit de rectification des données inexactes ou incomplètes ;</li>
+    <li>droit d'effacement, dans les limites des obligations légales de conservation ;</li>
+    <li>droit d'opposition, pour motif légitime, à certains traitements.</li>
+  </ul>
+  <p>Ces droits s'exercent en écrivant à l'adresse indiquée à la section 2. Une demande concernant les données saisies par un client (chauffeur, membre ERT, contact d'urgence…) est transmise à l'entreprise cliente concernée, celle-ci restant responsable des informations qu'elle a saisies et de la réponse à apporter. Toute personne peut également introduire une réclamation auprès de l'autorité gabonaise compétente en matière de protection des données à caractère personnel.</p>
+
+  <h2>10. Cookies et stockage local</h2>
   <p>FlotteMine n'utilise aucun cookie publicitaire ni traceur tiers. Le navigateur conserve localement (localStorage) une copie des dernières données synchronisées, uniquement pour permettre à l'application de continuer à afficher les informations en l'absence de connexion internet.</p>
 
-  <h2>9. Modifications</h2>
-  <p>Cette politique peut évoluer avec l'application. La date de dernière mise à jour est indiquée en haut de cette page.</p>
+  <h2>11. Mineurs</h2>
+  <p>Le Service est destiné à un usage professionnel et n'a pas vocation à collecter sciemment des données concernant des mineurs.</p>
 
-  <h2>10. Contact</h2>
-  <p>Pour toute question ou demande relative à vos données, contactez l'éditeur aux coordonnées de la section 1.</p>
+  <h2>12. Modifications de cette politique</h2>
+  <p>Cette politique peut évoluer avec l'application, notamment pour refléter l'ajout de nouvelles fonctionnalités. La date de dernière mise à jour est indiquée en haut de cette page ; en cas de changement significatif, les clients en seront informés par les moyens habituels de communication de l'éditeur.</p>
+
+  <h2>13. Contact</h2>
+  <p>Pour toute question ou demande relative à vos données, contactez l'éditeur aux coordonnées de la section 2.</p>
 
   <div class="nav-links">
     <a href="index.html">← Retour à l'application</a>
