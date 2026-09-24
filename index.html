@@ -41,9 +41,9 @@ Minimum version required to store current data is: `+i+`.
     --bg:#FBF8EF; --surface:#FFFFFF; --surface-2:#FBF1D9; --surface-hover:#F6E6B8;
     --ink:#0F2A1C; --ink-soft:#5C7268; --line:#E6DCC0; --line-strong:#404040;
     --yellow:#FFB800; --yellow-dim:#D6A24C; --rust:#0F2A1C;
-    --ok:#1E8A4C; --warn:#B5651D; --bad:#C5311E; --info:#2E5FC2;
+    --ok:#12A454; --warn:#D97706; --bad:#DC2626; --info:#2563EB;
     --accent-vehicles:#5B93F5; --accent-drivers:#9B7FE8; --accent-scan:#3FB6A8;
-    --accent-breakdowns:#E5573F; --accent-parts:#C2542B; --accent-stats:#D9A441; --accent-hse:#A6334D;
+    --accent-breakdowns:#E5573F; --accent-parts:#CC5A1E; --accent-stats:#D9A441; --accent-hse:#A6334D;
     --radius:8px;
   }
   *{box-sizing:border-box;}
@@ -115,7 +115,7 @@ Minimum version required to store current data is: `+i+`.
   .stats-table th{text-align:left;font-size:11.5px;font-weight:600;color:var(--ink-soft);padding:6px 10px;border-bottom:1px solid var(--line);}
   .stats-table td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
   .stats-table tr:last-child td{border-bottom:none;}
-  .status.orange{background:rgba(184,92,0,.15);color:#B85C00;}
+  .status.orange{background:rgba(217,114,11,.2);color:#D9720B;}
 
   .mp-wrap{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
   .mp-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);}
@@ -146,10 +146,10 @@ Minimum version required to store current data is: `+i+`.
   .veh-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
   .status{font-family:'IBM Plex Sans';font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:5px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;}
   .status svg{flex-shrink:0;}
-  .status.ok{background:rgba(30,138,76,.15);color:var(--ok);}
-  .status.warn{background:rgba(181,101,29,.15);color:var(--warn);}
-  .status.bad{background:rgba(197,49,30,.15);color:var(--bad);}
-  .status.info{background:rgba(46,95,194,.15);color:var(--info);}
+  .status.ok{background:rgba(18,164,84,.18);color:var(--ok);}
+  .status.warn{background:rgba(217,119,6,.18);color:var(--warn);}
+  .status.bad{background:rgba(220,38,38,.18);color:var(--bad);}
+  .status.info{background:rgba(37,99,235,.18);color:var(--info);}
 
   .detail{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:20px;position:sticky;top:20px;}
   .detail h3{margin:0 0 2px;font-size:19px;}
@@ -162,12 +162,12 @@ Minimum version required to store current data is: `+i+`.
   .hist-item:last-child{border-bottom:none;}
   .hist-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);margin-top:6px;flex-shrink:0;}
   .hist-date{color:var(--ink-soft);width:80px;flex-shrink:0;font-family:'IBM Plex Mono';}
-  .alert-box{background:rgba(197,49,30,.12);border:1px solid rgba(197,49,30,.35);border-radius:6px;padding:12px 14px;margin:12px 0;font-size:13px;color:var(--bad);font-family:'IBM Plex Sans';}
+  .alert-box{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4);border-radius:6px;padding:12px 14px;margin:12px 0;font-size:13px;color:var(--bad);font-family:'IBM Plex Sans';}
   .empty-note{color:var(--ink-soft);font-size:13px;padding:20px 0;text-align:center;font-family:'IBM Plex Sans';}
 
   form.inline-form{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
   form.inline-form .field{margin-bottom:9px;}
-  .config-warning{background:rgba(197,49,30,.12);border:1px solid rgba(197,49,30,.35);color:var(--bad);border-radius:6px;padding:12px 16px;font-size:13px;margin-bottom:18px;font-family:'IBM Plex Sans';}
+  .config-warning{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.4);color:var(--bad);border-radius:6px;padding:12px 16px;font-size:13px;margin-bottom:18px;font-family:'IBM Plex Sans';}
 
   /* ---- Tabs ---- */
   .tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;background:var(--surface);padding:4px;border-radius:8px;width:fit-content;}
@@ -178,12 +178,12 @@ Minimum version required to store current data is: `+i+`.
   /* ---- Priority / status badges ---- */
   .prio{font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;}
   .prio svg{flex-shrink:0;}
-  .prio.faible{background:rgba(30,138,76,.15);color:var(--ok);}
-  .prio.moyenne{background:rgba(181,101,29,.15);color:var(--warn);}
-  .prio.urgente{background:rgba(197,49,30,.15);color:var(--bad);}
+  .prio.faible{background:rgba(18,164,84,.18);color:var(--ok);}
+  .prio.moyenne{background:rgba(217,119,6,.18);color:var(--warn);}
+  .prio.urgente{background:rgba(220,38,38,.18);color:var(--bad);}
   .bstatus{font-size:11px;color:var(--ink-soft);}
-  .stock-low{background:rgba(197,49,30,.15);color:var(--bad);font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;}
-  .stock-ok{background:rgba(30,138,76,.15);color:var(--ok);font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;}
+  .stock-low{background:rgba(220,38,38,.18);color:var(--bad);font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;}
+  .stock-ok{background:rgba(18,164,84,.18);color:var(--ok);font-family:'IBM Plex Sans';font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;}
 
   .bd-item{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
   .bd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -191,9 +191,9 @@ Minimum version required to store current data is: `+i+`.
   .bd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
 
   /* ---- HSE ---- */
-  .prio.modere{background:rgba(181,101,29,.15);color:var(--warn);}
-  .prio.eleve{background:rgba(229,87,63,.15);color:var(--accent-breakdowns);}
-  .prio.critique{background:rgba(197,49,30,.15);color:var(--bad);}
+  .prio.modere{background:rgba(217,119,6,.18);color:var(--warn);}
+  .prio.eleve{background:rgba(229,87,63,.2);color:var(--accent-breakdowns);}
+  .prio.critique{background:rgba(220,38,38,.18);color:var(--bad);}
   .subtabs{display:flex;gap:6px;overflow-x:auto;margin:14px 0 18px;padding-bottom:2px;}
   .subtab-btn{flex:0 0 auto;font-family:'IBM Plex Sans';font-weight:600;font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;}
   .subtab-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
@@ -209,7 +209,7 @@ Minimum version required to store current data is: `+i+`.
   .btn-tiny svg{flex-shrink:0;}
   .row-status-icon{display:inline-flex;flex-shrink:0;}
   .btn-tiny:hover{border-color:var(--yellow);}
-  .btn-tiny.danger{color:var(--bad);border-color:rgba(197,49,30,.35);}
+  .btn-tiny.danger{color:var(--bad);border-color:rgba(220,38,38,.4);}
   .qty-adjust{display:flex;align-items:center;gap:8px;}
   .qty-adjust button{width:26px;height:26px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:15px;cursor:pointer;}
 
@@ -236,8 +236,8 @@ Minimum version required to store current data is: `+i+`.
   .driver-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .driver-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
   .status-select{padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:11.5px;font-family:'IBM Plex Sans';background:var(--surface-2);color:var(--ink);cursor:pointer;}
-  .alert-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(197,49,30,.15);color:var(--bad);}
-  .alert-chip.warn{background:rgba(181,101,29,.15);color:var(--warn);}
+  .alert-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:rgba(220,38,38,.18);color:var(--bad);}
+  .alert-chip.warn{background:rgba(217,119,6,.18);color:var(--warn);}
 
   .alerts-panel{margin-bottom:18px;}
   .alerts-panel .alert-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-strong);border-left:3px solid var(--bad);border-radius:6px;padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;font-family:'IBM Plex Sans';}
@@ -252,9 +252,9 @@ Minimum version required to store current data is: `+i+`.
   .category-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line);}
   .fleet-code{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-soft);}
   .countdown-chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-soft);}
-  .countdown-chip.warn{background:rgba(181,101,29,.15);color:var(--warn);}
-  .countdown-chip.bad{background:rgba(197,49,30,.15);color:var(--bad);}
-  .countdown-chip.info{background:rgba(46,95,194,.15);color:var(--info);}
+  .countdown-chip.warn{background:rgba(217,119,6,.18);color:var(--warn);}
+  .countdown-chip.bad{background:rgba(220,38,38,.18);color:var(--bad);}
+  .countdown-chip.info{background:rgba(37,99,235,.18);color:var(--info);}
 
   /* ---- QR codes ---- */
   .qr-block{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:8px;padding:16px;margin:14px 0;}
@@ -325,7 +325,7 @@ Minimum version required to store current data is: `+i+`.
     <h2 style="margin:0 0 4px;">Application verrouillée</h2>
     <div class="sub" style="font-family:'IBM Plex Sans';">Déverrouillez avec Face ID, empreinte digitale ou Windows Hello pour continuer.</div>
     <button class="btn btn-primary" id="biometric-unlock-btn" onclick="attemptBiometricUnlock()" style="width:100%;margin-top:16px;">Déverrouiller</button>
-    <div id="biometric-error" style="color:#C5311E;font-size:13px;margin-top:10px;"></div>
+    <div id="biometric-error" style="color:#DC2626;font-size:13px;margin-top:10px;"></div>
     <div class="switch-mode" style="margin-top:16px;">
       <a onclick="fallbackToPassword()">Utiliser mon mot de passe à la place</a>
     </div>
@@ -363,10 +363,10 @@ Minimum version required to store current data is: `+i+`.
     <div id="tab-vehicles" class="tab-panel">
       <div class="kpi-row">
         <div class="kpi"><b id="kpi-total">0</b><span>véhicules suivis</span></div>
-        <div class="kpi"><b id="kpi-available">0</b><span>disponibles</span></div>
-        <div class="kpi"><b id="kpi-maintenance">0</b><span>en maintenance</span></div>
-        <div class="kpi"><b id="kpi-warn">0</b><span>à surveiller</span></div>
-        <div class="kpi"><b id="kpi-bad">0</b><span>urgents</span></div>
+        <div class="kpi"><b id="kpi-available" style="color:var(--ok);">0</b><span>disponibles</span></div>
+        <div class="kpi"><b id="kpi-maintenance" style="color:var(--info);">0</b><span>en maintenance</span></div>
+        <div class="kpi"><b id="kpi-warn" style="color:var(--warn);">0</b><span>à surveiller</span></div>
+        <div class="kpi"><b id="kpi-bad" style="color:var(--bad);">0</b><span>urgents</span></div>
       </div>
 
       <div class="panel-title">
@@ -420,9 +420,9 @@ Minimum version required to store current data is: `+i+`.
     <div id="tab-drivers" class="tab-panel hidden">
       <div class="kpi-row">
         <div class="kpi"><b id="kpi-drv-total">0</b><span>chauffeurs</span></div>
-        <div class="kpi"><b id="kpi-drv-site">0</b><span>sur site</span></div>
-        <div class="kpi"><b id="kpi-drv-repos">0</b><span>en repos</span></div>
-        <div class="kpi"><b id="kpi-drv-libreville">0</b><span>à Libreville</span></div>
+        <div class="kpi"><b id="kpi-drv-site" style="color:var(--ok);">0</b><span>sur site</span></div>
+        <div class="kpi"><b id="kpi-drv-repos" style="color:var(--info);">0</b><span>en repos</span></div>
+        <div class="kpi"><b id="kpi-drv-libreville" style="color:var(--accent-drivers);">0</b><span>à Libreville</span></div>
         <div class="kpi"><b id="kpi-drv-conge">0</b><span>en congé</span></div>
         <div class="kpi"><b id="kpi-drv-alerts" style="color:var(--bad);">0</b><span>alertes</span></div>
       </div>
@@ -515,8 +515,8 @@ Minimum version required to store current data is: `+i+`.
     <!-- ===== ONGLET PANNES ===== -->
     <div id="tab-breakdowns" class="tab-panel hidden">
       <div class="kpi-row">
-        <div class="kpi"><b id="kpi-bd-urgent">0</b><span>pannes urgentes</span></div>
-        <div class="kpi"><b id="kpi-bd-progress">0</b><span>en cours</span></div>
+        <div class="kpi"><b id="kpi-bd-urgent" style="color:var(--bad);">0</b><span>pannes urgentes</span></div>
+        <div class="kpi"><b id="kpi-bd-progress" style="color:var(--warn);">0</b><span>en cours</span></div>
         <div class="kpi"><b id="kpi-bd-open">0</b><span>ouvertes au total</span></div>
       </div>
 
@@ -557,7 +557,7 @@ Minimum version required to store current data is: `+i+`.
     <div id="tab-parts" class="tab-panel hidden">
       <div class="kpi-row">
         <div class="kpi"><b id="kpi-parts-total">0</b><span>références en stock</span></div>
-        <div class="kpi"><b id="kpi-parts-low">0</b><span>stock bas</span></div>
+        <div class="kpi"><b id="kpi-parts-low" style="color:var(--bad);">0</b><span>stock bas</span></div>
       </div>
 
       <div class="panel-title">
@@ -588,10 +588,10 @@ Minimum version required to store current data is: `+i+`.
       </div>
       <div class="kpi-row">
         <div class="kpi"><b id="kpi-stats-pannes-total">0</b><span>pannes au total</span></div>
-        <div class="kpi"><b id="kpi-stats-pannes-open">0</b><span>pannes ouvertes</span></div>
+        <div class="kpi"><b id="kpi-stats-pannes-open" style="color:var(--warn);">0</b><span>pannes ouvertes</span></div>
         <div class="kpi"><b id="kpi-stats-pannes-month">0</b><span>pannes ce mois-ci</span></div>
-        <div class="kpi"><b id="kpi-stats-interventions-total">0</b><span>réparations effectuées</span></div>
-        <div class="kpi"><b id="kpi-stats-cost-month">0</b><span>XAF dépensés ce mois-ci</span></div>
+        <div class="kpi"><b id="kpi-stats-interventions-total" style="color:var(--ok);">0</b><span>réparations effectuées</span></div>
+        <div class="kpi"><b id="kpi-stats-cost-month" style="color:var(--accent-stats);">0</b><span>XAF dépensés ce mois-ci</span></div>
       </div>
 
       <div class="panel-title">
@@ -973,7 +973,7 @@ async function handleAuth(){
       await registerBiometric(result.data.user.id, email);
       sessionStorage.setItem('fm-biometric-unlocked', '1');
     } catch(e) {
-      errorEl.style.color = '#C5311E';
+      errorEl.style.color = '#DC2626';
       errorEl.textContent = "Connexion réussie, mais l'activation de la biométrie a échoué : " + (e.message || e);
     }
   }
@@ -1875,7 +1875,7 @@ async function renderDriverDetail(){
         <div class="sub" style="margin-bottom:0;">${d.matricule || 'Sans matricule'} · ${driverCode(d)}</div>
       </div>
     </div>
-    ${alerts.map(a=>`<div class="alert-box" style="${a.level==='warn' ? 'background:rgba(181,101,29,.12);border-color:rgba(181,101,29,.35);color:var(--warn);' : ''}">⚠ ${a.text}</div>`).join('')}
+    ${alerts.map(a=>`<div class="alert-box" style="${a.level==='warn' ? 'background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.4);color:var(--warn);' : ''}">⚠ ${a.text}</div>`).join('')}
 
     <div class="qr-block">
       <canvas id="qr-driver-${d.id}"></canvas>
@@ -1890,7 +1890,7 @@ async function renderDriverDetail(){
     ${d.status === 'libreville' ? (() => { const info = librevilleInfo(d); return `
     <div class="row"><span class="k">Phase actuelle</span><span class="v">${info.label}</span></div>
     <div class="row"><span class="k">Jours restants dans cette phase</span><span class="v">${info.overdue > 0 ? `Séjour dépassé de ${info.overdue} j` : `${info.daysRemainingInPhase} j`}</span></div>
-    ${info.phase === 'astreinte' && info.overdue === 0 ? `<div class="alert-box" style="background:rgba(46,95,194,.12);border-color:rgba(46,95,194,.35);color:var(--info);">ℹ️ Semaine de repos terminée — disponible pour l'astreinte.</div>` : ''}
+    ${info.phase === 'astreinte' && info.overdue === 0 ? `<div class="alert-box" style="background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.4);color:var(--info);">ℹ️ Semaine de repos terminée — disponible pour l'astreinte.</div>` : ''}
     `; })() : ''}
     <div class="row"><span class="k">Site / localisation</span><span class="v">${d.site || '—'}</span></div>
     <div class="row"><span class="k">Téléphone</span><span class="v">${d.phone ? `<a href="tel:${d.phone}" style="color:var(--ink);">${d.phone}</a>` : '—'}</span></div>
@@ -3246,7 +3246,7 @@ function renderMaintenancePlan(){
       </div>
       <div class="mp-legend">
         <span><i style="background:var(--bad);"></i>Urgent / dépassé</span>
-        <span><i style="background:#B85C00;"></i>Panne à traiter</span>
+        <span><i style="background:#D9720B;"></i>Panne à traiter</span>
         <span><i style="background:var(--warn);"></i>Vidange proche</span>
         <span><i style="background:var(--info);"></i>À vérifier</span>
         <span><i style="background:var(--ok);"></i>Planifié</span>
